@@ -1,5 +1,11 @@
 use nannou::prelude::*;
 
+const PLAYER_SIZE: (f32,f32) = (80.0, 25.0);
+const PLAYER_SPEED: f32 = 5.0;
+
+const BALL_SIZE:(f32,f32) = (10.0, 10.0);
+const BALL_SPEED: f32 = 3.0;
+
 fn main() {
     nannou::app(model)
         .event(event)
@@ -8,12 +14,17 @@ fn main() {
         .run();
 }
 
+struct Player{}
+struct Ball{}
+
 struct Model {
     player_pos: f32,
-    ball_pos: f32,
+    ball_pos: Point2,
     score: u32,
     key_press: Key,
     key_pressed: bool,
+    ball_dir_x: f32,
+    ball_dir_y: f32,
 }
 
 fn model(app: &App) -> Model {
@@ -29,10 +40,12 @@ fn model(app: &App) -> Model {
     
     Model {
         player_pos:0.0,
-        ball_pos:0.0,
+        ball_pos:pt2(0.0,0.0),
         score: 0,
         key_press: Key::Up,
         key_pressed: false,
+        ball_dir_x: 1.0,
+        ball_dir_y: -1.0,
     }
 }
 
@@ -72,16 +85,19 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent)
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
 
-    let increment = 4.0;
-    if( model.key_pressed )
+    // Handle ball movement
+    model.ball_pos.x += (BALL_SPEED * model.ball_dir_x);
+    model.ball_pos.y += (BALL_SPEED * model.ball_dir_y);
+    // Handle input
+    if model.key_pressed
     {
         if model.key_press == Key::Left
         {
-            model.player_pos -= increment;
+            model.player_pos -= PLAYER_SPEED;
         }
         else if model.key_press == Key::Right 
         {
-            model.player_pos += increment;
+            model.player_pos += PLAYER_SPEED;
         }
     }
 }
@@ -91,11 +107,16 @@ fn view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
+    // Draw ball
+    draw.rect()
+        .xy(model.ball_pos)
+        .w_h(BALL_SIZE.0, BALL_SIZE.1)
+        .color(WHITE);
     
     // Draw player
     draw.rect()
         .xy(pt2(model.player_pos,win.bottom()))
-        .w_h(80.0,25.0)
+        .w_h(PLAYER_SIZE.0, PLAYER_SIZE.1)
         .color(WHITE);
     
     draw.to_frame(app, &frame).unwrap();

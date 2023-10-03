@@ -1,10 +1,16 @@
 use nannou::prelude::*;
+use nannou::draw::properties::ColorScalar;
 
 const PLAYER_SIZE: (f32,f32) = (80.0, 25.0);
 const PLAYER_SPEED: f32 = 5.0;
 
 const BALL_SIZE:(f32,f32) = (10.0, 10.0);
 const BALL_SPEED: f32 = 1.5;
+
+const BRICK_SIZE: (f32,f32) = (128.0, 48.0);
+
+const NUM_ROWS: u8 = 5;
+const NUM_COLS: u8 = 5;
 
 fn main() {
     nannou::app(model)
@@ -14,8 +20,13 @@ fn main() {
         .run();
 }
 
-struct Player{}
-struct Ball{}
+//struct Player{}
+//struct Ball{}
+
+struct Brick{
+    position: f32,
+    colour: ColorScalar,
+}
 
 struct Model {
     player_pos: f32,
@@ -25,6 +36,7 @@ struct Model {
     key_pressed: bool,
     ball_dir_x: f32,
     ball_dir_y: f32,
+    bricks: Vec<Brick>,
 }
 
 fn model(app: &App) -> Model {
@@ -46,7 +58,10 @@ fn model(app: &App) -> Model {
         key_pressed: false,
         ball_dir_x: 1.0,
         ball_dir_y: -1.0,
+        bricks: Vec::new(),
     }
+
+    // TODO: Populate vector with bricks
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -146,7 +161,13 @@ fn view(app: &App, model: &Model, frame: Frame){
         .xy(pt2(model.player_pos,win.bottom()))
         .w_h(PLAYER_SIZE.0, PLAYER_SIZE.1)
         .color(WHITE);
-    
+   
+    // Draw brick
+    draw.rect()
+        .xy(pt2(0.0,0.0))
+        .w_h(BRICK_SIZE.0, BRICK_SIZE.1)
+        .color(RED);
+
     draw.to_frame(app, &frame).unwrap();
 }
 

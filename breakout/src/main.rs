@@ -104,7 +104,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     // Handle Collision with player
 
     // Is it at bottom of screen?
-    if model.ball_pos.y <= (win.bottom() + PLAYER_SIZE.1 - 5.0)
+    if model.ball_pos.y <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
     {
         // Has it hit the player?
         if model.ball_pos.x <= ( model.player_pos + (PLAYER_SIZE.0 / 2.0) )
@@ -112,6 +112,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
             if model.ball_pos.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
             {
                 model.ball_dir_y *= -1.0;
+                model.ball_pos.y = ( win.bottom() + (PLAYER_SIZE.1 / 2.0) );
             }
         }
     }

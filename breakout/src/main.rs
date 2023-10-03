@@ -4,7 +4,7 @@ const PLAYER_SIZE: (f32,f32) = (80.0, 25.0);
 const PLAYER_SPEED: f32 = 5.0;
 
 const BALL_SIZE:(f32,f32) = (10.0, 10.0);
-const BALL_SPEED: f32 = 3.0;
+const BALL_SPEED: f32 = 1.5;
 
 fn main() {
     nannou::app(model)
@@ -49,10 +49,7 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn event(_app: &App, _model: &mut Model, _event: Event) {
-
-}
-
+fn event(_app: &App, _model: &mut Model, _event: Event) { }
 
 fn handle_keypress( key: Key, model: &mut Model )
 {
@@ -83,11 +80,14 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent)
     }
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
 
+fn update(app: &App, model: &mut Model, _update: Update) {
+
+    let win = app.window_rect();
     // Handle ball movement
-    model.ball_pos.x += (BALL_SPEED * model.ball_dir_x);
-    model.ball_pos.y += (BALL_SPEED * model.ball_dir_y);
+    model.ball_pos.x += BALL_SPEED * model.ball_dir_x;
+    model.ball_pos.y += BALL_SPEED * model.ball_dir_y;
+    
     // Handle input
     if model.key_pressed
     {
@@ -99,6 +99,33 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         {
             model.player_pos += PLAYER_SPEED;
         }
+    }
+
+    // Handle Collision with player
+
+    // Is it at bottom of screen?
+    if model.ball_pos.y <= (win.bottom() + PLAYER_SIZE.1 - 5.0)
+    {
+        // Has it hit the player?
+        if model.ball_pos.x <= ( model.player_pos + (PLAYER_SIZE.0 / 2.0) )
+        {
+            if model.ball_pos.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
+            {
+                model.ball_dir_y *= -1.0;
+            }
+        }
+    }
+
+    /* Side Walls */
+    if model.ball_pos.x >= win.right() || model.ball_pos.x <= win.left()
+    {
+        model.ball_dir_x *= -1.0;
+    }
+    
+    /* Roof */
+    if model.ball_pos.y >= win.top()
+    {
+        model.ball_dir_y *= -1.0;
     }
 }
 

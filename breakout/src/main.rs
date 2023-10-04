@@ -1,5 +1,4 @@
 use nannou::prelude::*;
-use nannou::draw::properties::ColorScalar;
 
 const PLAYER_SIZE: (f32,f32) = (80.0, 25.0);
 const PLAYER_SPEED: f32 = 5.0;
@@ -24,8 +23,7 @@ fn main() {
 //struct Ball{}
 
 struct Brick{
-    position: f32,
-    colour: ColorScalar,
+    position: Point2,
 }
 
 struct Model {
@@ -50,7 +48,7 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
     
-    Model {
+    let mut model = Model {
         player_pos:0.0,
         ball_pos:pt2(0.0,0.0),
         score: 0,
@@ -59,9 +57,26 @@ fn model(app: &App) -> Model {
         ball_dir_x: 1.0,
         ball_dir_y: -1.0,
         bricks: Vec::new(),
+    };
+
+    // Populate vector with bricks
+    let win = app.window_rect();
+    let mut row_pos = win.left() + (BRICK_SIZE.0 / 2.0);
+    for i in 0..NUM_ROWS{
+        let mut col_pos = win.top() - (BRICK_SIZE.1 / 2.0);
+        for j in 0..NUM_COLS{
+            println!("{:?}", pt2(row_pos, col_pos));
+            let brick = Brick {
+                position: pt2(row_pos, col_pos),
+            };
+            model.bricks.push(brick);
+            col_pos -= (BRICK_SIZE.1);
+        }
+        row_pos += BRICK_SIZE.0;
+        println!("{:?}", row_pos);
     }
 
-    // TODO: Populate vector with bricks
+    model
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -127,7 +142,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
             if model.ball_pos.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
             {
                 model.ball_dir_y *= -1.0;
-                model.ball_pos.y = ( win.bottom() + (PLAYER_SIZE.1 / 2.0) );
+                model.ball_pos.y = win.bottom() + (PLAYER_SIZE.1 / 2.0);
             }
         }
     }
@@ -162,11 +177,19 @@ fn view(app: &App, model: &Model, frame: Frame){
         .w_h(PLAYER_SIZE.0, PLAYER_SIZE.1)
         .color(WHITE);
    
-    // Draw brick
-    draw.rect()
-        .xy(pt2(0.0,0.0))
-        .w_h(BRICK_SIZE.0, BRICK_SIZE.1)
-        .color(RED);
+    // Draw brick(s)
+    
+    let colours = [PLUM, BLUE, GREEN, YELLOW, RED];
+    let mut i = 0;
+    for brick in &model.bricks{
+        draw.rect()
+            .xy(brick.position)
+            .w_h(BRICK_SIZE.0, BRICK_SIZE.1)
+            .color(colours[i]);
+           
+            i +=1;
+            i = i % 5;
+    }
 
     draw.to_frame(app, &frame).unwrap();
 }

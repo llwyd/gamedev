@@ -24,6 +24,7 @@ fn main() {
 
 struct Brick{
     position: Point2,
+    colour: u8, // This is shite
 }
 
 struct Model {
@@ -62,15 +63,16 @@ fn model(app: &App) -> Model {
     // Populate vector with bricks
     let win = app.window_rect();
     let mut row_pos = win.left() + (BRICK_SIZE.0 / 2.0);
-    for i in 0..NUM_ROWS{
+    for _i in 0..NUM_ROWS{
         let mut col_pos = win.top() - (BRICK_SIZE.1 / 2.0);
         for j in 0..NUM_COLS{
             println!("{:?}", pt2(row_pos, col_pos));
             let brick = Brick {
                 position: pt2(row_pos, col_pos),
+                colour: j,
             };
             model.bricks.push(brick);
-            col_pos -= (BRICK_SIZE.1);
+            col_pos -= BRICK_SIZE.1;
         }
         row_pos += BRICK_SIZE.0;
         println!("{:?}", row_pos);
@@ -180,15 +182,11 @@ fn view(app: &App, model: &Model, frame: Frame){
     // Draw brick(s)
     
     let colours = [PLUM, BLUE, GREEN, YELLOW, RED];
-    let mut i = 0;
     for brick in &model.bricks{
         draw.rect()
             .xy(brick.position)
             .w_h(BRICK_SIZE.0, BRICK_SIZE.1)
-            .color(colours[i]);
-           
-            i +=1;
-            i = i % 5;
+            .color(colours[brick.colour as usize]);
     }
 
     draw.to_frame(app, &frame).unwrap();

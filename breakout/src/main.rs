@@ -20,7 +20,10 @@ fn main() {
 }
 
 //struct Player{}
-//struct Ball{}
+struct Ball{
+    position: Point2,
+    dir: Point2,
+}
 
 struct Brick{
     position: Point2,
@@ -29,12 +32,10 @@ struct Brick{
 
 struct Model {
     player_pos: f32,
-    ball_pos: Point2,
     score: u32,
     key_press: Key,
     key_pressed: bool,
-    ball_dir_x: f32,
-    ball_dir_y: f32,
+    ball: Ball,
     bricks: Vec<Brick>,
 }
 
@@ -51,12 +52,13 @@ fn model(app: &App) -> Model {
     
     let mut model = Model {
         player_pos:0.0,
-        ball_pos:pt2(0.0,0.0),
         score: 0,
         key_press: Key::Up,
         key_pressed: false,
-        ball_dir_x: 1.0,
-        ball_dir_y: -1.0,
+        ball: Ball{
+            position: pt2(0.0,0.0),
+            dir: pt2(1.0,-1.0),
+        },
         bricks: Vec::new(),
     };
 
@@ -115,8 +117,8 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 
     let win = app.window_rect();
     // Handle ball movement
-    model.ball_pos.x += BALL_SPEED * model.ball_dir_x;
-    model.ball_pos.y += BALL_SPEED * model.ball_dir_y;
+    model.ball.position.x += BALL_SPEED * model.ball.dir.x;
+    model.ball.position.y += BALL_SPEED * model.ball.dir.y;
     
     // Handle input
     if model.key_pressed
@@ -134,44 +136,45 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     // Handle Collision with player
 
     // Is it at bottom of screen?
-    if model.ball_pos.y <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
+    if model.ball.position.y <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
     {
         // Has it hit the player?
-        if model.ball_pos.x <= ( model.player_pos + (PLAYER_SIZE.0 / 2.0) )
+        if model.ball.position.x <= ( model.player_pos + (PLAYER_SIZE.0 / 2.0) )
         {
-            if model.ball_pos.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
+            if model.ball.position.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
             {
-                model.ball_dir_y *= -1.0;
-                model.ball_pos.y = win.bottom() + (PLAYER_SIZE.1 / 2.0);
+                model.ball.dir.y *= -1.0;
+                model.ball.position.y = win.bottom() + (PLAYER_SIZE.1 / 2.0);
             }
         }
     }
 
     /* Side Walls */
-    if model.ball_pos.x >= win.right() || model.ball_pos.x <= win.left()
+    if model.ball.position.x >= win.right() || model.ball.position.x <= win.left()
     {
-        model.ball_dir_x *= -1.0;
+        model.ball.dir.x *= -1.0;
     }
     
     /* Roof */
-    if model.ball_pos.y >= win.top()
+    if model.ball.position.y >= win.top()
     {
-        model.ball_dir_y *= -1.0;
+        model.ball.dir.y *= -1.0;
     }
 
     /* Has it hit a brick? */
-    model.bricks.retain(|i| not_collided_with_brick(i, model.ball_pos.x, model.ball_pos.y));
+    model.bricks.retain(|i| not_collided_with_brick(i, &mut model.ball));
 }
 
-fn not_collided_with_brick(brick: &Brick, x: f32, y: f32) -> bool {
+fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
 
     let mut ret = true;
-    if y >= brick.position.y
+    if ball.position.y >= brick.position.y
     {
-        if x <= ( brick.position.x + (BRICK_SIZE.0 / 2.0) )
+        if ball.position.x <= ( brick.position.x + (BRICK_SIZE.0 / 2.0) )
         {
-            if x >= ( brick.position.x - (BRICK_SIZE.0 / 2.0) )
+            if ball.position.x >= ( brick.position.x - (BRICK_SIZE.0 / 2.0) )
             {
+                ball.dir.y *= -1.0;
                 ret = false;
             }
         }
@@ -187,7 +190,7 @@ fn view(app: &App, model: &Model, frame: Frame){
 
     // Draw ball
     draw.rect()
-        .xy(model.ball_pos)
+        .xy(model.ball.position)
         .w_h(BALL_SIZE.0, BALL_SIZE.1)
         .color(WHITE);
     

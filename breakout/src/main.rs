@@ -66,7 +66,6 @@ fn model(app: &App) -> Model {
     for _i in 0..NUM_ROWS{
         let mut col_pos = win.top() - (BRICK_SIZE.1 / 2.0);
         for j in 0..NUM_COLS{
-            println!("{:?}", pt2(row_pos, col_pos));
             let brick = Brick {
                 position: pt2(row_pos, col_pos),
                 colour: j,
@@ -75,7 +74,6 @@ fn model(app: &App) -> Model {
             col_pos -= BRICK_SIZE.1;
         }
         row_pos += BRICK_SIZE.0;
-        println!("{:?}", row_pos);
     }
 
     model
@@ -160,6 +158,26 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     {
         model.ball_dir_y *= -1.0;
     }
+
+    /* Has it hit a brick? */
+    model.bricks.retain(|i| not_collided_with_brick(i, model.ball_pos.x, model.ball_pos.y));
+}
+
+fn not_collided_with_brick(brick: &Brick, x: f32, y: f32) -> bool {
+
+    let mut ret = true;
+    if y >= brick.position.y
+    {
+        if x <= ( brick.position.x + (BRICK_SIZE.0 / 2.0) )
+        {
+            if x >= ( brick.position.x - (BRICK_SIZE.0 / 2.0) )
+            {
+                ret = false;
+            }
+        }
+    }
+
+    ret
 }
 
 fn view(app: &App, model: &Model, frame: Frame){

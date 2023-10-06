@@ -136,7 +136,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     // Handle Collision with player
 
     // Is it at bottom of screen?
-    if model.ball.position.y <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
+    if model.ball.position.y - (BALL_SIZE.0/2.0) <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
     {
         // Has it hit the player?
         if model.ball.position.x <= ( model.player_pos + (PLAYER_SIZE.0 / 2.0) )
@@ -144,15 +144,21 @@ fn update(app: &App, model: &mut Model, _update: Update) {
             if model.ball.position.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
             {
                 model.ball.dir.y *= -1.0;
-                model.ball.position.y = win.bottom() + (PLAYER_SIZE.1 / 2.0);
+                model.ball.position.y = win.bottom() + (PLAYER_SIZE.1 / 2.0) + (BALL_SIZE.1/2.0);
             }
         }
     }
 
     /* Side Walls */
-    if model.ball.position.x >= win.right() || model.ball.position.x <= win.left()
+    if model.ball.position.x >= win.right()
     {
         model.ball.dir.x *= -1.0;
+        model.ball.position.x = win.right() - (BALL_SIZE.1/2.0);
+    }
+    if model.ball.position.x <= win.left()
+    {
+        model.ball.dir.x *= -1.0;
+        model.ball.position.x = win.left() + (BALL_SIZE.1/2.0);
     }
     
     /* Roof */

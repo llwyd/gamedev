@@ -170,12 +170,26 @@ fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
     let mut ret = true;
     if ball.position.y >= brick.position.y
     {
+        let y_diff = ball.position.y - brick.position.y;
         if ball.position.x <= ( brick.position.x + (BRICK_SIZE.0 / 2.0) )
         {
+            let x_r_diff = ( brick.position.x + (BRICK_SIZE.0 / 2.0) ) - ball.position.x;
             if ball.position.x >= ( brick.position.x - (BRICK_SIZE.0 / 2.0) )
             {
+                let x_l_diff = ball.position.x - ( brick.position.x - (BRICK_SIZE.0 / 2.0));
                 ball.dir.y *= -1.0;
                 ret = false;
+               
+                println!("ydiff: {:?}", y_diff);
+                println!("xldiff: {:?}", x_l_diff);
+                println!("xrdiff: {:?}", x_r_diff);
+                // clip ball to shortest side
+                if y_diff < x_r_diff{
+                    if y_diff < x_l_diff{
+                        ball.position.y = brick.position.y - (BRICK_SIZE.1 / 2.0);
+                        println!("Clip");
+                    }
+                }
             }
         }
     }

@@ -20,7 +20,11 @@ fn main() {
         .run();
 }
 
-//struct Player{}
+struct Player{
+    position: f32,
+    score: u32,
+}
+
 struct Ball{
     position: Point2,
     dir: Point2,
@@ -33,8 +37,7 @@ struct Brick{
 }
 
 struct Model {
-    player_pos: f32,
-    score: u32,
+    player: Player,
     key_press: Key,
     key_pressed: bool,
     ball: Ball,
@@ -53,8 +56,10 @@ fn model(app: &App) -> Model {
         .unwrap();
     
     let mut model = Model {
-        player_pos:0.0,
-        score: 0,
+        player: Player{
+            position: 0.0,
+            score: 0,
+        },
         key_press: Key::Up,
         key_pressed: false,
         ball: Ball{
@@ -128,11 +133,11 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     {
         if model.key_press == Key::Left
         {
-            model.player_pos -= PLAYER_SPEED;
+            model.player.position -= PLAYER_SPEED;
         }
         else if model.key_press == Key::Right 
         {
-            model.player_pos += PLAYER_SPEED;
+            model.player.position += PLAYER_SPEED;
         }
     }
 
@@ -142,9 +147,9 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     if model.ball.position.y - (BALL_SIZE.0/2.0) <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
     {
         // Has it hit the player?
-        if model.ball.position.x <= ( model.player_pos + (PLAYER_SIZE.0 / 2.0) )
+        if model.ball.position.x <= ( model.player.position + (PLAYER_SIZE.0 / 2.0) )
         {
-            if model.ball.position.x >= ( model.player_pos - (PLAYER_SIZE.0 / 2.0) )
+            if model.ball.position.x >= ( model.player.position - (PLAYER_SIZE.0 / 2.0) )
             {
                 model.ball.dir.y *= -1.0;
                 model.ball.position.y = win.bottom() + (PLAYER_SIZE.1 / 2.0) + (BALL_SIZE.1/2.0);
@@ -225,7 +230,7 @@ fn view(app: &App, model: &Model, frame: Frame){
     
     // Draw player
     draw.rect()
-        .xy(pt2(model.player_pos,win.bottom()))
+        .xy(pt2(model.player.position,win.bottom()))
         .w_h(PLAYER_SIZE.0, PLAYER_SIZE.1)
         .color(WHITE);
    

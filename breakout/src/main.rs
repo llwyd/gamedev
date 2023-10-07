@@ -56,7 +56,7 @@ fn model(app: &App) -> Model {
         key_press: Key::Up,
         key_pressed: false,
         ball: Ball{
-            position: pt2(0.0,0.0),
+            position: pt2(0.0,-20.0),
             dir: pt2(1.0,-1.0),
         },
         bricks: Vec::new(),
@@ -174,7 +174,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
 
     let mut ret = true;
-    if ball.position.y >= brick.position.y
+    if ball.position.y + (BALL_SIZE.1 / 2.0) >= ( brick.position.y - (BRICK_SIZE.1 / 2.0) )
     {
         let y_diff = ball.position.y - brick.position.y;
         if ball.position.x <= ( brick.position.x + (BRICK_SIZE.0 / 2.0) )
@@ -192,9 +192,16 @@ fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
                 // clip ball to shortest side
                 if y_diff < x_r_diff{
                     if y_diff < x_l_diff{
-                        ball.position.y = brick.position.y - (BRICK_SIZE.1 / 2.0);
-                        println!("Clip");
+                        ball.position.y = brick.position.y - (BRICK_SIZE.1 / 2.0) - (BALL_SIZE.1 / 2.0) ;
+                        println!("Clip Y");
                     }
+                }
+                else if x_l_diff < x_r_diff{
+                    ball.position.x = brick.position.x - (BRICK_SIZE.0 / 2.0) - (BALL_SIZE.0 / 2.0) ;
+                }
+                else
+                {
+                    ball.position.x = brick.position.x + (BRICK_SIZE.0 / 2.0) + (BALL_SIZE.0 / 2.0) ;
                 }
             }
         }

@@ -56,7 +56,7 @@ fn model(app: &App) -> Model {
         .size(640,480)
         .min_size(640,480)
         .max_size(640,480)
-        //.decorations(false)
+        .decorations(false)
         .resizable(false)
         .event(window_event)
         .build()

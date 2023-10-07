@@ -119,7 +119,44 @@ fn handle_keyrelease( key: Key, model: &mut Model )
        }
 }
 
-fn window_event(_app: &App, model: &mut Model, event: WindowEvent)
+fn reset(app: &App, model: &mut Model){
+    model.player.position = 0.0;
+    model.player.score = 0;
+    model.key_press = Key::Up;
+    model.key_pressed = false;
+    model.ball.position = pt2(0.0,-20.0);
+    model.ball.dir = pt2(1.0,-1.0);
+    model.ball.speed = BALL_DEFAULT_SPEED;
+    model.bricks.clear();
+    
+    // Populate vector with bricks
+    let win = app.window_rect();
+    let mut row_pos = win.left() + (BRICK_SIZE.0 / 2.0);
+    for _i in 0..NUM_ROWS{
+        let mut col_pos = win.top() - (BRICK_SIZE.1 / 2.0);
+        for j in 0..NUM_COLS{
+            let brick = Brick {
+                position: pt2(row_pos, col_pos),
+                colour: j,
+            };
+            model.bricks.push(brick);
+            col_pos -= BRICK_SIZE.1;
+        }
+        row_pos += BRICK_SIZE.0;
+    }
+    
+    model.state = State::Idle;
+}
+
+fn gameover_event(app: &App, model: &mut Model, event: WindowEvent)
+{
+    match event {
+        KeyReleased(_key) => { reset(app, model) }
+        _ => {}
+    }
+}
+
+fn idle_event(_app: &App, model: &mut Model, event: WindowEvent)
 {
     match event {
         KeyPressed(key) => { handle_keypress(key, model) }
@@ -128,6 +165,13 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent)
     }
 }
 
+fn window_event(app: &App, model: &mut Model, event: WindowEvent)
+{
+    match model.state{
+        State::Idle => idle_event(app, model, event),
+        State::GameOver => gameover_event(app, model, event),
+    }
+}
 
 fn update(app: &App, model: &mut Model, update: Update) { 
     match model.state{
@@ -146,7 +190,30 @@ fn idle_update(app: &App, model: &mut Model, _update: Update) {
     // Handle ball movement
     model.ball.position.x += model.ball.speed * model.ball.dir.x;
     model.ball.position.y += model.ball.speed * model.ball.dir.y;
-    
+   
+    /* Repopulate bricks if needed */
+    if model.bricks.is_empty() {
+        if model.ball.position.y - (BALL_SIZE.0 / 2.0 ) <= 0.0 - BRICK_SIZE.1{
+            // Populate vector with bricks
+            let win = app.window_rect();
+            let mut row_pos = win.left() + (BRICK_SIZE.0 / 2.0);
+            for _i in 0..NUM_ROWS{
+                let mut col_pos = win.top() - (BRICK_SIZE.1 / 2.0);
+                for j in 0..NUM_COLS{
+                    let brick = Brick {
+                        position: pt2(row_pos, col_pos),
+                        colour: j,
+                    };
+                    model.bricks.push(brick);
+                    col_pos -= BRICK_SIZE.1;
+                }
+                row_pos += BRICK_SIZE.0;
+            }
+
+        }
+    }
+
+
     // Handle input
     if model.key_pressed
     {

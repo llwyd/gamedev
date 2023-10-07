@@ -220,10 +220,16 @@ fn idle_update(app: &App, model: &mut Model, _update: Update) {
         if model.key_press == Key::Left
         {
             model.player.position -= PLAYER_SPEED;
+            if model.player.position - (PLAYER_SIZE.0 / 2.0) <= win.left(){
+                model.player.position = win.left() + (PLAYER_SIZE.0 / 2.0);
+            }
         }
         else if model.key_press == Key::Right 
         {
             model.player.position += PLAYER_SPEED;
+            if model.player.position + (PLAYER_SIZE.0 / 2.0) >= win.right(){
+                model.player.position = win.right() - (PLAYER_SIZE.0 / 2.0);
+            }
         }
     }
 

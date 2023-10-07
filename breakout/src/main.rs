@@ -4,7 +4,8 @@ const PLAYER_SIZE: (f32,f32) = (80.0, 25.0);
 const PLAYER_SPEED: f32 = 5.0;
 
 const BALL_SIZE:(f32,f32) = (10.0, 10.0);
-const BALL_SPEED: f32 = 1.5;
+const BALL_DEFAULT_SPEED: f32 = 1.5;
+const BALL_SPEED_INC: f32 = 0.25;
 
 const BRICK_SIZE: (f32,f32) = (128.0, 48.0);
 
@@ -23,6 +24,7 @@ fn main() {
 struct Ball{
     position: Point2,
     dir: Point2,
+    speed: f32,
 }
 
 struct Brick{
@@ -58,6 +60,7 @@ fn model(app: &App) -> Model {
         ball: Ball{
             position: pt2(0.0,-20.0),
             dir: pt2(1.0,-1.0),
+            speed: BALL_DEFAULT_SPEED,
         },
         bricks: Vec::new(),
     };
@@ -117,8 +120,8 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 
     let win = app.window_rect();
     // Handle ball movement
-    model.ball.position.x += BALL_SPEED * model.ball.dir.x;
-    model.ball.position.y += BALL_SPEED * model.ball.dir.y;
+    model.ball.position.x += model.ball.speed * model.ball.dir.x;
+    model.ball.position.y += model.ball.speed * model.ball.dir.y;
     
     // Handle input
     if model.key_pressed
@@ -183,6 +186,7 @@ fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
             if ball.position.x >= ( brick.position.x - (BRICK_SIZE.0 / 2.0) )
             {
                 let x_l_diff = ball.position.x - ( brick.position.x - (BRICK_SIZE.0 / 2.0));
+                ball.speed += BALL_SPEED_INC;
                 ret = false;
                
                 // clip ball to shortest side

@@ -1,7 +1,7 @@
 use nannou::prelude::*;
 
 const PLAYER_SIZE: (f32,f32) = (80.0, 25.0);
-const PLAYER_SPEED: f32 = 5.0;
+const PLAYER_SPEED: f32 = 10.0;
 
 const BALL_SIZE:(f32,f32) = (10.0, 10.0);
 const BALL_DEFAULT_SPEED: f32 = 1.5;
@@ -176,10 +176,10 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     }
 
     /* Has it hit a brick? */
-    model.bricks.retain(|i| not_collided_with_brick(i, &mut model.ball));
+    model.bricks.retain(|i| not_collided_with_brick(i, &mut model.ball, &mut model.player));
 }
 
-fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
+fn not_collided_with_brick(brick: &Brick, ball: &mut Ball, player: &mut Player) -> bool {
 
     let mut ret = true;
     if ball.position.y + (BALL_SIZE.1 / 2.0) >= ( brick.position.y - (BRICK_SIZE.1 / 2.0) )
@@ -190,8 +190,10 @@ fn not_collided_with_brick(brick: &Brick, ball: &mut Ball) -> bool {
             let x_r_diff = ( brick.position.x + (BRICK_SIZE.0 / 2.0) ) - ball.position.x;
             if ball.position.x >= ( brick.position.x - (BRICK_SIZE.0 / 2.0) )
             {
+                // There has been a brick collision
                 let x_l_diff = ball.position.x - ( brick.position.x - (BRICK_SIZE.0 / 2.0));
                 ball.speed += BALL_SPEED_INC;
+                player.score += 1;
                 ret = false;
                
                 // clip ball to shortest side
@@ -234,8 +236,7 @@ fn view(app: &App, model: &Model, frame: Frame){
         .w_h(PLAYER_SIZE.0, PLAYER_SIZE.1)
         .color(WHITE);
    
-    // Draw brick(s)
-    
+    // Draw brick(s)    
     let colours = [PLUM, BLUE, GREEN, YELLOW, RED];
     for brick in &model.bricks{
         draw.rect()
@@ -243,6 +244,12 @@ fn view(app: &App, model: &Model, frame: Frame){
             .w_h(BRICK_SIZE.0, BRICK_SIZE.1)
             .color(colours[brick.colour as usize]);
     }
+
+    /* Draw score */
+    let score = format!("Score {}", model.player.score);
+    draw.text(&score)
+        .font_size(40)
+        .xy(pt2(win.right() - 80.0 , win.bottom() + 30.0));
 
     draw.to_frame(app, &frame).unwrap();
 }

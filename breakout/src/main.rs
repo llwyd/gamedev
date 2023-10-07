@@ -12,6 +12,12 @@ const BRICK_SIZE: (f32,f32) = (128.0, 48.0);
 const NUM_ROWS: u8 = 5;
 const NUM_COLS: u8 = 5;
 
+#[derive(Copy,Clone)]
+enum State{
+    Idle, // Normal game 
+    GameOver,
+}
+
 fn main() {
     nannou::app(model)
         .event(event)
@@ -37,6 +43,7 @@ struct Brick{
 }
 
 struct Model {
+    state: State,
     player: Player,
     key_press: Key,
     key_pressed: bool,
@@ -56,6 +63,7 @@ fn model(app: &App) -> Model {
         .unwrap();
     
     let mut model = Model {
+        state: State::Idle,
         player: Player{
             position: 0.0,
             score: 0,
@@ -121,7 +129,18 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent)
 }
 
 
-fn update(app: &App, model: &mut Model, _update: Update) {
+fn update(app: &App, model: &mut Model, update: Update) { 
+    match model.state{
+        State::Idle => idle_update(app, model, update),
+        State::GameOver => gameover_update(app, model, update),
+    }
+}
+
+fn gameover_update(_app: &App, _model: &mut Model, _update: Update) {
+
+}
+
+fn idle_update(app: &App, model: &mut Model, _update: Update) {
 
     let win = app.window_rect();
     // Handle ball movement
@@ -144,7 +163,10 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     // Handle Collision with player
 
     // Is it at bottom of screen?
-    if model.ball.position.y - (BALL_SIZE.0/2.0) <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
+    if model.ball.position.y - (BALL_SIZE.0/2.0) <= (win.bottom() - (PLAYER_SIZE.1 / 2.0)){
+            model.state = State::GameOver; 
+    }
+    else if model.ball.position.y - (BALL_SIZE.0/2.0) <= (win.bottom() + (PLAYER_SIZE.1 / 2.0))
     {
         // Has it hit the player?
         if model.ball.position.x <= ( model.player.position + (PLAYER_SIZE.0 / 2.0) )
@@ -220,6 +242,37 @@ fn not_collided_with_brick(brick: &Brick, ball: &mut Ball, player: &mut Player) 
 }
 
 fn view(app: &App, model: &Model, frame: Frame){
+    match model.state{
+        State::Idle => idle_view(app, model, frame),
+        State::GameOver => gameover_view(app, model, frame),
+    }
+}
+
+fn gameover_view(app: &App, model: &Model, frame: Frame){
+    let win = app.window_rect();
+    let draw = app.draw();
+    draw.background().color(BLACK);
+    
+    let game_over = "GAME OVER";
+    draw.text(&game_over)
+        .font_size(75)
+        .xy(pt2(-120.0, win.top() - 100.0));
+    
+    /* Draw score */
+    let score = format!("Score {}", model.player.score);
+    draw.text(&score)
+        .font_size(60)
+        .xy(pt2(120.0 , win.top() - 100.0));
+    
+    let anykey = format!("press any key to retry");
+    draw.text(&anykey)
+        .font_size(20)
+        .xy(pt2(0.0, -100.0));
+
+    draw.to_frame(app, &frame).unwrap();
+}
+
+fn idle_view(app: &App, model: &Model, frame: Frame){
     let win = app.window_rect();
     let draw = app.draw();
     draw.background().color(BLACK);

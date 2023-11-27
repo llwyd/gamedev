@@ -74,11 +74,12 @@ fn view(app: &App, model: &Model, frame: Frame){
     draw.background().color(BLACK);
 
     let point1 = pt2(-15.0, 0.0);
-    let point2 = pt2(15.0, 0.0);
-    let point3 = pt2(0.0, 39.0);
+    let point2 = pt2(0.0, 6.5);
+    let point3 = pt2(15.0, 0.0);
+    let point4 = pt2(0.0, 39.0);
 
-    draw.tri()
-        .points(point1,point2,point3)
+    draw.quad()
+        .points(point1,point2,point3,point4)
         .color(WHITE);
 
     draw.to_frame(app, &frame).unwrap();

@@ -27,6 +27,7 @@ struct Player{
 
 struct Model {
     player: Player,
+    last_event: WindowEvent,
 }
 
 fn main() {
@@ -53,7 +54,8 @@ fn model(app: &App) -> Model {
                 position: pt2(0.0, 0.0),
                 rotation: 0.0,
                 score: 0,
-        }
+        },
+        last_event: KeyReleased(Key::Escape)
     };
 
     model
@@ -63,6 +65,15 @@ fn event(_app: &App, _model: &mut Model, _event: Event) { }
 
 fn window_event(app: &App, model: &mut Model, event: WindowEvent)
 {
+    if model.last_event != event
+    {
+        match event {
+            KeyPressed(key) => { println!("Key Pressed"); }
+            KeyReleased(key) => { println!("Key Released"); }
+            _ => {}
+        }
+        model.last_event = event;
+    }
 }
 
 fn update(app: &App, model: &mut Model, update: Update) {

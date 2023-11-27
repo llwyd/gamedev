@@ -80,6 +80,7 @@ fn view(app: &App, model: &Model, frame: Frame){
 
     draw.quad()
         .points(point1,point2,point3,point4)
+        .rotate(model.player.rotation)
         .color(WHITE);
 
     draw.to_frame(app, &frame).unwrap();

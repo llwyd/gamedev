@@ -11,23 +11,29 @@ enum State{
 
 #[derive(Copy,Clone)]
 enum StateEvents{
-    Left_KeyPress,
-    Left_KeyRelease,
-    Right_KeyPress,
-    Right_KeyRelease,
-    Up_KeyPress,
-    Up_KeyRelease,
+    NoneKeyPress,
+    LeftKeyPress,
+    LeftKeyRelease,
+    RightKeyPress,
+    RightKeyRelease,
+    UpKeyPress,
+    UpKeyRelease,
 }
+
 
 struct Player{
     position: Point2,
     rotation: f32,
+    rotation_inc: f32,
     score: u32,
 }
+
+type StateFunc = fn(&mut Player,StateEvents);
 
 struct Model {
     player: Player,
     last_event: WindowEvent,
+    state: StateFunc,
 }
 
 fn main() {
@@ -53,9 +59,11 @@ fn model(app: &App) -> Model {
         player: Player {
                 position: pt2(0.0, 0.0),
                 rotation: 0.0,
+                rotation_inc: 0.0,
                 score: 0,
         },
-        last_event: KeyReleased(Key::Escape)
+        last_event: KeyReleased(Key::Escape),
+        state: state_idle
     };
 
     model
@@ -63,13 +71,31 @@ fn model(app: &App) -> Model {
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
 
+fn keypress_to_state(key: Key) -> StateEvents{
+    match key{
+        Key::Left => return StateEvents::LeftKeyPress,
+        Key::Right => return StateEvents::RightKeyPress,
+        Key::Up => return StateEvents::UpKeyPress,
+        _ => return StateEvents::NoneKeyPress,
+    }
+}
+
+fn keyrelease_to_state(key: Key) -> StateEvents{
+    match key{
+        Key::Left => return StateEvents::LeftKeyRelease,
+        Key::Right => return StateEvents::RightKeyRelease,
+        Key::Up => return StateEvents::UpKeyRelease,
+        _ => return StateEvents::NoneKeyPress,
+    }
+}
+
 fn window_event(app: &App, model: &mut Model, event: WindowEvent)
 {
     if model.last_event != event
     {
         match event {
-            KeyPressed(key) => { println!("Key Pressed"); }
-            KeyReleased(key) => { println!("Key Released"); }
+            KeyPressed(key) => { println!("Key Pressed"); (model.state)(&mut model.player,keypress_to_state(key)) }
+            KeyReleased(key) => { println!("Key Released");(model.state)(&mut model.player,keyrelease_to_state(key)) }
             _ => {}
         }
         model.last_event = event;
@@ -77,6 +103,20 @@ fn window_event(app: &App, model: &mut Model, event: WindowEvent)
 }
 
 fn update(app: &App, model: &mut Model, update: Update) {
+    model.player.rotation += model.player.rotation_inc;
+}
+
+fn state_idle(player: &mut Player, event:StateEvents)
+{
+    match event{
+        StateEvents::LeftKeyPress => {player.rotation_inc = deg_to_rad(3.6)},
+        StateEvents::LeftKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
+        StateEvents::RightKeyPress => {player.rotation_inc = deg_to_rad(-3.6)},
+        StateEvents::RightKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
+        StateEvents::UpKeyPress => {},
+        StateEvents::UpKeyRelease => {} ,
+        _ => { /* Do nowt */}
+    }
 }
 
 fn view(app: &App, model: &Model, frame: Frame){

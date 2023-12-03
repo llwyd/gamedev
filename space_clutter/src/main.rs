@@ -1,6 +1,10 @@
 use nannou::prelude::*;
 
 const WINDOW_SIZE: (u32, u32) = (640, 480);
+const SPACESHIP_PEAK: f32 = 16.25;
+const SPACESHIP_TROUGH: f32 = 6.5;
+const SPACESHIP_WIDTH: f32 = 30.0;
+const SPACESHIP_HEIGHT: f32 = 39.0;
 
 #[derive(Copy,Clone)]
 enum State{
@@ -124,10 +128,10 @@ fn view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
-    let point1 = pt2(-15.0, 0.0);
-    let point2 = pt2(0.0, 6.5);
-    let point3 = pt2(15.0, 0.0);
-    let point4 = pt2(0.0, 39.0);
+    let point1 = pt2(model.player.position.y - (SPACESHIP_WIDTH / 2.0), model.player.position.x - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point2 = pt2(model.player.position.y, model.player.position.x - SPACESHIP_PEAK);
+    let point3 = pt2(model.player.position.y + (SPACESHIP_WIDTH / 2.0), model.player.position.x - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point4 = pt2(model.player.position.y, model.player.position.x + SPACESHIP_PEAK);
 
     draw.quad()
         .points(point1,point2,point3,point4)

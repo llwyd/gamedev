@@ -61,7 +61,7 @@ fn model(app: &App) -> Model {
     
     let mut model = Model {
         player: Player {
-                position: pt2(0.0, 0.0),
+                position: pt2(100.0, -100.0),
                 rotation: 0.0,
                 rotation_inc: 0.0,
                 score: 0,
@@ -128,13 +128,14 @@ fn view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
-    let point1 = pt2(model.player.position.y - (SPACESHIP_WIDTH / 2.0), model.player.position.x - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
-    let point2 = pt2(model.player.position.y, model.player.position.x - SPACESHIP_PEAK);
-    let point3 = pt2(model.player.position.y + (SPACESHIP_WIDTH / 2.0), model.player.position.x - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
-    let point4 = pt2(model.player.position.y, model.player.position.x + SPACESHIP_PEAK);
+    let point1 = pt2(0.0 - (SPACESHIP_WIDTH / 2.0), 0.0 - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point2 = pt2(0.0, 0.0 - SPACESHIP_PEAK);
+    let point3 = pt2(0.0 + (SPACESHIP_WIDTH / 2.0), 0.0 - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point4 = pt2(0.0, 0.0 + SPACESHIP_PEAK);
 
     draw.quad()
         .points(point1,point2,point3,point4)
+        .x_y(model.player.position.x, model.player.position.y)
         .rotate(model.player.rotation)
         .color(WHITE);
 

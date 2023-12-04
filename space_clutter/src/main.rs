@@ -7,6 +7,8 @@ const SPACESHIP_WIDTH: f32 = 30.0;
 const SPACESHIP_HEIGHT: f32 = 39.0;
 const SPACESHIP_SPEED: f32 = 4.0;
 const ANGLE_INC: f32 = 3.6;
+const MAX_PROJECTILES: u32 = 20;
+const MISSILE_SPEED: f32 = 8.0;
 
 #[derive(Copy,Clone)]
 enum State{
@@ -24,6 +26,8 @@ enum StateEvents{
     RightKeyRelease,
     UpKeyPress,
     UpKeyRelease,
+    SpaceKeyPress,
+    SpaceKeyRelease,
 }
 
 
@@ -33,6 +37,12 @@ struct Player{
     rotation_inc: f32,
     score: u32,
     thrust: bool,
+    missile: Vec<Projectile>,
+}
+
+struct Projectile{
+    position: Point2,
+    rotation: f32,
 }
 
 type StateFunc = fn(&mut Player,StateEvents);
@@ -69,9 +79,10 @@ fn model(app: &App) -> Model {
                 rotation_inc: 0.0,
                 score: 0,
                 thrust: false,
+                missile: Vec::new(),
         },
         last_event: KeyReleased(Key::Escape),
-        state: state_idle
+        state: state_idle,
     };
 
     model
@@ -84,6 +95,7 @@ fn keypress_to_state(key: Key) -> StateEvents{
         Key::Left => return StateEvents::LeftKeyPress,
         Key::Right => return StateEvents::RightKeyPress,
         Key::Up => return StateEvents::UpKeyPress,
+        Key::Space => return StateEvents::SpaceKeyPress,
         _ => return StateEvents::NoneKeyPress,
     }
 }
@@ -93,6 +105,7 @@ fn keyrelease_to_state(key: Key) -> StateEvents{
         Key::Left => return StateEvents::LeftKeyRelease,
         Key::Right => return StateEvents::RightKeyRelease,
         Key::Up => return StateEvents::UpKeyRelease,
+        Key::Space => return StateEvents::SpaceKeyRelease,
         _ => return StateEvents::NoneKeyPress,
     }
 }
@@ -110,11 +123,27 @@ fn window_event(app: &App, model: &mut Model, event: WindowEvent)
     }
 }
 
+fn fire_missile(player: &mut Player)
+{
+    println!("Firing missile");
+    let missile = Projectile{
+        position: player.position,
+        rotation: player.rotation,
+    };
+    player.missile.push(missile);
+}
+
 fn update(app: &App, model: &mut Model, update: Update) {
     model.player.rotation += model.player.rotation_inc;
     if model.player.thrust{
         model.player.position.x += -SPACESHIP_SPEED * model.player.rotation.sin();
         model.player.position.y += SPACESHIP_SPEED * model.player.rotation.cos();
+    }
+
+    //TODO: Pop missile when it hits something
+    for missile in &mut model.player.missile{
+        missile.position.x += -MISSILE_SPEED * missile.rotation.sin();
+        missile.position.y += MISSILE_SPEED * missile.rotation.cos();
     }
 }
 
@@ -126,7 +155,8 @@ fn state_idle(player: &mut Player, event:StateEvents)
         StateEvents::RightKeyPress => {player.rotation_inc = deg_to_rad(-ANGLE_INC)},
         StateEvents::RightKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
         StateEvents::UpKeyPress => {player.thrust = true},
-        StateEvents::UpKeyRelease => {player.thrust = false} ,
+        StateEvents::UpKeyRelease => {player.thrust = false},
+        StateEvents::SpaceKeyPress => { fire_missile(player) },
         _ => { /* Do nowt */}
     }
 }
@@ -147,5 +177,11 @@ fn view(app: &App, model: &Model, frame: Frame){
         .rotate(model.player.rotation)
         .color(WHITE);
 
+    for missile in &model.player.missile{
+        draw.rect()
+            .xy(missile.position)
+            .w_h(4.0,4.0)
+            .color(WHITE);
+    }
     draw.to_frame(app, &frame).unwrap();
 }

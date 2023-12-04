@@ -5,6 +5,8 @@ const SPACESHIP_PEAK: f32 = 16.25;
 const SPACESHIP_TROUGH: f32 = 6.5;
 const SPACESHIP_WIDTH: f32 = 30.0;
 const SPACESHIP_HEIGHT: f32 = 39.0;
+const SPACESHIP_SPEED: f32 = 4.0;
+const ANGLE_INC: f32 = 3.6;
 
 #[derive(Copy,Clone)]
 enum State{
@@ -30,6 +32,7 @@ struct Player{
     rotation: f32,
     rotation_inc: f32,
     score: u32,
+    thrust: bool,
 }
 
 type StateFunc = fn(&mut Player,StateEvents);
@@ -65,6 +68,7 @@ fn model(app: &App) -> Model {
                 rotation: 0.0,
                 rotation_inc: 0.0,
                 score: 0,
+                thrust: false,
         },
         last_event: KeyReleased(Key::Escape),
         state: state_idle
@@ -108,17 +112,21 @@ fn window_event(app: &App, model: &mut Model, event: WindowEvent)
 
 fn update(app: &App, model: &mut Model, update: Update) {
     model.player.rotation += model.player.rotation_inc;
+    if model.player.thrust{
+        model.player.position.x += -SPACESHIP_SPEED * model.player.rotation.sin();
+        model.player.position.y += SPACESHIP_SPEED * model.player.rotation.cos();
+    }
 }
 
 fn state_idle(player: &mut Player, event:StateEvents)
 {
     match event{
-        StateEvents::LeftKeyPress => {player.rotation_inc = deg_to_rad(3.6)},
+        StateEvents::LeftKeyPress =>{player.rotation_inc = deg_to_rad(ANGLE_INC)},
         StateEvents::LeftKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
-        StateEvents::RightKeyPress => {player.rotation_inc = deg_to_rad(-3.6)},
+        StateEvents::RightKeyPress => {player.rotation_inc = deg_to_rad(-ANGLE_INC)},
         StateEvents::RightKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
-        StateEvents::UpKeyPress => {},
-        StateEvents::UpKeyRelease => {} ,
+        StateEvents::UpKeyPress => {player.thrust = true},
+        StateEvents::UpKeyRelease => {player.thrust = false} ,
         _ => { /* Do nowt */}
     }
 }

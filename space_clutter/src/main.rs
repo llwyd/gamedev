@@ -133,6 +133,34 @@ fn fire_missile(player: &mut Player)
     player.missile.push(missile);
 }
 
+fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
+    let mut has_hit = false;
+
+    if missile.position.x > win.right()
+    {
+        has_hit = true;
+    }
+    else if missile.position.x < win.left()
+    {
+        has_hit = true;
+    }
+    else if missile.position.y > win.top()
+    {
+        has_hit = true;
+    }
+    else if missile.position.y < win.bottom()
+    {
+        has_hit = true;
+    }
+
+    if has_hit
+    {
+        println!("Removing missile from vector");
+    }
+
+    has_hit
+}
+
 fn update(app: &App, model: &mut Model, update: Update) {
     model.player.rotation += model.player.rotation_inc;
     if model.player.thrust{
@@ -141,6 +169,8 @@ fn update(app: &App, model: &mut Model, update: Update) {
     }
 
     //TODO: Pop missile when it hits something
+    model.player.missile.retain(|missiles| !has_missile_hit_edge(missiles, app.window_rect()));
+    
     for missile in &mut model.player.missile{
         missile.position.x += -MISSILE_SPEED * missile.rotation.sin();
         missile.position.y += MISSILE_SPEED * missile.rotation.cos();

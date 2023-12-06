@@ -10,6 +10,11 @@ const ANGLE_INC: f32 = 3.6;
 const MAX_PROJECTILES: u32 = 20;
 const MISSILE_SPEED: f32 = 8.0;
 
+/* Can have more than this, for example when a big asteroid explodes into little ones
+ * however, this is used to prevent the game generating more */
+const MAX_ASTEROIDS: u32 = 1;
+const ASTEROID_MAX_SIZE: f32 = 40.0;
+
 #[derive(Copy,Clone)]
 enum State{
     Idle, // Normal game 
@@ -40,6 +45,13 @@ struct Player{
     missile: Vec<Projectile>,
 }
 
+struct Asteroid{
+    position: Point2,
+    rotation: f32,
+    rotation_speed: f32,
+    size: f32,
+}
+
 struct Projectile{
     position: Point2,
     rotation: f32,
@@ -49,6 +61,7 @@ type StateFunc = fn(&mut Player,StateEvents);
 
 struct Model {
     player: Player,
+    asteroid: Vec<Asteroid>,
     last_event: WindowEvent,
     state: StateFunc,
 }
@@ -74,16 +87,26 @@ fn model(app: &App) -> Model {
     
     let mut model = Model {
         player: Player {
-                position: pt2(100.0, -100.0),
+                position: pt2(0.0, 0.0),
                 rotation: 0.0,
                 rotation_inc: 0.0,
                 score: 0,
                 thrust: false,
                 missile: Vec::new(),
         },
+        asteroid: Vec::new(),
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
     };
+
+    let asteroid = Asteroid{
+        position: pt2(100.0, 100.0),
+        rotation: 0.0,
+        rotation_speed: 1.0,
+        size: ASTEROID_MAX_SIZE
+    };
+    
+    model.asteroid.push(asteroid);
 
     model
 }
@@ -161,6 +184,18 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
     has_hit
 }
 
+fn has_missile_hit_asteroid(missile: &Projectile, asteroids: &Vec<Asteroid>) -> bool{
+    let mut has_hit = false;
+
+    for asteroid in asteroids{
+
+    }
+
+    has_hit
+}
+
+
+
 fn update(app: &App, model: &mut Model, update: Update) {
     model.player.rotation += model.player.rotation_inc;
     if model.player.thrust{
@@ -168,7 +203,6 @@ fn update(app: &App, model: &mut Model, update: Update) {
         model.player.position.y += SPACESHIP_SPEED * model.player.rotation.cos();
     }
 
-    //TODO: Pop missile when it hits something
     model.player.missile.retain(|missiles| !has_missile_hit_edge(missiles, app.window_rect()));
     
     for missile in &mut model.player.missile{
@@ -213,5 +247,13 @@ fn view(app: &App, model: &Model, frame: Frame){
             .w_h(4.0,4.0)
             .color(WHITE);
     }
+
+    for asteroid in &model.asteroid{
+        draw.rect()
+            .xy(asteroid.position)
+            .w_h(asteroid.size, asteroid.size)
+            .color(WHITE);
+    }
+
     draw.to_frame(app, &frame).unwrap();
 }

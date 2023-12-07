@@ -104,7 +104,7 @@ fn model(app: &App) -> Model {
     let asteroid = Asteroid{
         position: pt2(100.0, 100.0),
         rotation: 0.0,
-        rotation_speed: 1.0,
+        rotation_speed: 36.0,
         size: ASTEROID_MAX_SIZE
     };
     
@@ -223,6 +223,10 @@ fn update(app: &App, model: &mut Model, update: Update) {
         model.player.position.y += SPACESHIP_SPEED * model.player.rotation.cos();
     }
 
+    for asteroid in &mut model.asteroid{
+        asteroid.rotation += asteroid.rotation_speed;
+    }
+
     model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids));
     model.player.missile.retain(|missiles| !has_missile_hit_edge(missiles, app.window_rect()));
     
@@ -273,6 +277,7 @@ fn view(app: &App, model: &Model, frame: Frame){
         draw.rect()
             .xy(asteroid.position)
             .w_h(asteroid.size, asteroid.size)
+            .rotate(asteroid.rotation)
             .color(WHITE);
     }
 

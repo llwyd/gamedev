@@ -16,6 +16,9 @@ const MISSILE_SIZE: f32 = 4.0;
  * however, this is used to prevent the game generating more */
 const MAX_ASTEROIDS: u32 = 1;
 const ASTEROID_MAX_SIZE: f32 = 40.0;
+const ASTEROID_MIN_SIZE: f32 = 20.0;
+const ASTEROID_MAX_SPEED: f32 = 22.5;
+const ASTEROID_MIN_SPEED: f32 = 3.6;
 
 #[derive(Copy,Clone)]
 enum State{
@@ -240,12 +243,16 @@ fn update(app: &App, model: &mut Model, update: Update) {
     {
         let new_x = random_range(WINDOW_SIZE.0 as f32 / -2.0, WINDOW_SIZE.0 as f32 / 2.0);
         let new_y = random_range(WINDOW_SIZE.1 as f32 / -2.0, WINDOW_SIZE.1 as f32 / 2.0);
+       
+        let new_size = random_range(ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE);
         
+        let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
+
         let asteroid = Asteroid{
             position: pt2(new_x, new_y),
             rotation: 0.0,
-            rotation_speed: 36.0,
-            size: ASTEROID_MAX_SIZE
+            rotation_speed: deg_to_rad(new_speed),
+            size: new_size,
         };
         
         model.asteroid.push(asteroid);
@@ -296,6 +303,11 @@ fn view(app: &App, model: &Model, frame: Frame){
             .rotate(asteroid.rotation)
             .color(WHITE);
     }
+    
+    let score = format!("Score {}", model.player.score);
+    draw.text(&score)
+        .font_size(40)
+        .xy(pt2(win.right() - 80.0 , win.bottom() + 30.0));
 
     draw.to_frame(app, &frame).unwrap();
 }

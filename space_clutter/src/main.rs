@@ -179,15 +179,14 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
         has_hit = true;
     }
 
+    if missile.hit
+    {
+        has_hit = true;
+    }
+    
     if has_hit
     {
         println!("Removing missile from vector");
-    }
-
-    if missile.hit
-    {
-        println!("Asteroid hit by missile");
-        has_hit = true;
     }
 
     has_hit

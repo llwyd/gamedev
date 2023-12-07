@@ -1,4 +1,5 @@
 use nannou::prelude::*;
+use nannou::rand;
 
 const WINDOW_SIZE: (u32, u32) = (640, 480);
 const SPACESHIP_PEAK: f32 = 16.25;
@@ -232,6 +233,22 @@ fn update(app: &App, model: &mut Model, update: Update) {
     for missile in &mut model.player.missile{
         missile.position.x += -MISSILE_SPEED * missile.rotation.sin();
         missile.position.y += MISSILE_SPEED * missile.rotation.cos();
+    }
+
+    /* Generate new asteroid if needed */
+    if model.asteroid.len() < MAX_ASTEROIDS as usize
+    {
+        let new_x = random_range(WINDOW_SIZE.0 as f32 / -2.0, WINDOW_SIZE.0 as f32 / 2.0);
+        let new_y = random_range(WINDOW_SIZE.1 as f32 / -2.0, WINDOW_SIZE.1 as f32 / 2.0);
+        
+        let asteroid = Asteroid{
+            position: pt2(new_x, new_y),
+            rotation: 0.0,
+            rotation_speed: 36.0,
+            size: ASTEROID_MAX_SIZE
+        };
+        
+        model.asteroid.push(asteroid);
     }
 }
 

@@ -9,6 +9,7 @@ const SPACESHIP_SPEED: f32 = 4.0;
 const ANGLE_INC: f32 = 3.6;
 const MAX_PROJECTILES: u32 = 20;
 const MISSILE_SPEED: f32 = 8.0;
+const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
@@ -53,6 +54,7 @@ struct Asteroid{
 }
 
 struct Projectile{
+    hit: bool,
     position: Point2,
     rotation: f32,
 }
@@ -150,6 +152,7 @@ fn fire_missile(player: &mut Player)
 {
     println!("Firing missile");
     let missile = Projectile{
+        hit: false,
         position: player.position,
         rotation: player.rotation,
     };
@@ -181,15 +184,32 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
         println!("Removing missile from vector");
     }
 
+    if missile.hit
+    {
+        println!("Asteroid hit by missile");
+        has_hit = true;
+    }
+
     has_hit
 }
 
-fn has_missile_hit_asteroid(missile: &Projectile, asteroids: &Vec<Asteroid>) -> bool{
+fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid) -> bool{
     let mut has_hit = false;
 
-    for asteroid in asteroids{
+        for missile in &mut *missiles
+        {
+            let left_edge:bool = (missile.position.x + (MISSILE_SIZE/2.0)) > (asteroid.position.x - (asteroid.size / 2.0));
+            let right_edge:bool = (missile.position.x + (MISSILE_SIZE/2.0)) < (asteroid.position.x + (asteroid.size / 2.0));
+            let top_edge:bool = (missile.position.y + (MISSILE_SIZE/2.0)) < (asteroid.position.y + (asteroid.size / 2.0));
+            let bottom_edge:bool = (missile.position.y + (MISSILE_SIZE/2.0)) > (asteroid.position.y - (asteroid.size / 2.0));
 
-    }
+            if left_edge && right_edge && top_edge && bottom_edge
+            {
+                println!("Hit!");
+                missile.hit = true;
+                has_hit = true;
+            }
+        }
 
     has_hit
 }
@@ -203,6 +223,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
         model.player.position.y += SPACESHIP_SPEED * model.player.rotation.cos();
     }
 
+    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids));
     model.player.missile.retain(|missiles| !has_missile_hit_edge(missiles, app.window_rect()));
     
     for missile in &mut model.player.missile{
@@ -244,7 +265,7 @@ fn view(app: &App, model: &Model, frame: Frame){
     for missile in &model.player.missile{
         draw.rect()
             .xy(missile.position)
-            .w_h(4.0,4.0)
+            .w_h(MISSILE_SIZE, MISSILE_SIZE)
             .color(WHITE);
     }
 

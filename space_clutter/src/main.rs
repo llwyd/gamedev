@@ -196,7 +196,7 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
     has_hit
 }
 
-fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid) -> bool{
+fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32) -> bool{
     let mut has_hit = false;
 
         for missile in &mut *missiles
@@ -211,6 +211,7 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid)
                 println!("Hit!");
                 missile.hit = true;
                 has_hit = true;
+                *score += 1;
             }
         }
 
@@ -230,7 +231,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
         asteroid.rotation += asteroid.rotation_speed;
     }
 
-    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids));
+    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score));
     model.player.missile.retain(|missiles| !has_missile_hit_edge(missiles, app.window_rect()));
     
     for missile in &mut model.player.missile{
@@ -278,7 +279,7 @@ fn view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
-    let point1 = pt2(0.0 - (SPACESHIP_WIDTH / 2.0), 0.0 - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point1 = pt2(-(SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
     let point2 = pt2(0.0, 0.0 - SPACESHIP_PEAK);
     let point3 = pt2(0.0 + (SPACESHIP_WIDTH / 2.0), 0.0 - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
     let point4 = pt2(0.0, 0.0 + SPACESHIP_PEAK);

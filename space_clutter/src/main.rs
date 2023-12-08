@@ -282,9 +282,9 @@ fn view(app: &App, model: &Model, frame: Frame){
     draw.background().color(BLACK);
 
     let point1 = pt2(-(SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
-    let point2 = pt2(0.0, 0.0 - SPACESHIP_PEAK);
-    let point3 = pt2(0.0 + (SPACESHIP_WIDTH / 2.0), 0.0 - (SPACESHIP_PEAK + SPACESHIP_TROUGH));
-    let point4 = pt2(0.0, 0.0 + SPACESHIP_PEAK);
+    let point2 = pt2(0.0, -SPACESHIP_PEAK);
+    let point3 = pt2((SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point4 = pt2(0.0, SPACESHIP_PEAK);
 
     draw.quad()
         .points(point1,point2,point3,point4)

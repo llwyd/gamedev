@@ -221,6 +221,8 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
 
 
 fn update(app: &App, model: &mut Model, update: Update) {
+
+    // #TODO exponential decay for thrust
     model.player.rotation += model.player.rotation_inc;
     if model.player.thrust{
         model.player.position.x += -SPACESHIP_SPEED * model.player.rotation.sin();

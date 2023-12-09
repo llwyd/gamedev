@@ -47,6 +47,8 @@ struct Player{
     rotation_inc: f32,
     score: u32,
     thrust: bool,
+    thrust_rotation: f32,
+    thrust_counter: u32,
     missile: Vec<Projectile>,
 }
 
@@ -98,6 +100,8 @@ fn model(app: &App) -> Model {
                 rotation_inc: 0.0,
                 score: 0,
                 thrust: false,
+                thrust_rotation: 0.0,
+                thrust_counter: 0,
                 missile: Vec::new(),
         },
         asteroid: Vec::new(),
@@ -223,11 +227,20 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
 fn update(app: &App, model: &mut Model, update: Update) {
 
     // #TODO exponential decay for thrust
+    //
     model.player.rotation += model.player.rotation_inc;
+    
     if model.player.thrust{
-        model.player.position.x += -SPACESHIP_SPEED * model.player.rotation.sin();
-        model.player.position.y += SPACESHIP_SPEED * model.player.rotation.cos();
+        model.player.thrust_rotation = model.player.rotation;
+        model.player.thrust_counter = 0;
     }
+
+    //if model.player.thrust{
+        let exp = (model.player.thrust_counter as f32 * -0.012).exp();
+        model.player.position.x += -SPACESHIP_SPEED * model.player.thrust_rotation.sin() * exp;
+        model.player.position.y += SPACESHIP_SPEED * model.player.thrust_rotation.cos() * exp;
+        model.player.thrust_counter += 1;
+    //}
 
     for asteroid in &mut model.asteroid{
         asteroid.rotation += asteroid.rotation_speed;

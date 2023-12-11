@@ -17,7 +17,7 @@ const MISSILE_SIZE: f32 = 4.0;
 const MAX_ASTEROIDS: u32 = 1;
 const ASTEROID_MAX_SIZE: f32 = 40.0;
 const ASTEROID_MIN_SIZE: f32 = 20.0;
-const ASTEROID_MAX_SPEED: f32 = 22.5;
+const ASTEROID_MAX_SPEED: f32 = 11.25;
 const ASTEROID_MIN_SPEED: f32 = 3.6;
 
 #[derive(Copy,Clone)]
@@ -226,8 +226,6 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
 
 fn update(app: &App, model: &mut Model, update: Update) {
 
-    // #TODO exponential decay for thrust
-    //
     model.player.rotation += model.player.rotation_inc;
     
     if model.player.thrust{
@@ -235,12 +233,12 @@ fn update(app: &App, model: &mut Model, update: Update) {
         model.player.thrust_counter = 0;
     }
 
-    //if model.player.thrust{
-        let exp = (model.player.thrust_counter as f32 * -0.012).exp();
-        model.player.position.x += -SPACESHIP_SPEED * model.player.thrust_rotation.sin() * exp;
-        model.player.position.y += SPACESHIP_SPEED * model.player.thrust_rotation.cos() * exp;
+    let exp = (model.player.thrust_counter as f32 * -0.012).exp();
+    model.player.position.x += -SPACESHIP_SPEED * model.player.thrust_rotation.sin() * exp;
+    model.player.position.y += SPACESHIP_SPEED * model.player.thrust_rotation.cos() * exp;
+    if model.player.thrust_counter < u32::MAX{
         model.player.thrust_counter += 1;
-    //}
+    }
 
     for asteroid in &mut model.asteroid{
         asteroid.rotation += asteroid.rotation_speed;

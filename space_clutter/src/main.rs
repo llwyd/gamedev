@@ -233,7 +233,8 @@ fn update(app: &App, model: &mut Model, update: Update) {
         model.player.thrust_counter = 0;
     }
 
-    let exp = (model.player.thrust_counter as f32 * -0.012).exp();
+    //let exp = (model.player.thrust_counter as f32 * -0.012).exp();
+    let exp = (model.player.thrust_counter as f32 * -0.5).exp();
     model.player.position.x += -SPACESHIP_SPEED * model.player.thrust_rotation.sin() * exp;
     model.player.position.y += SPACESHIP_SPEED * model.player.thrust_rotation.cos() * exp;
     if model.player.thrust_counter < u32::MAX{
@@ -302,6 +303,25 @@ fn view(app: &App, model: &Model, frame: Frame){
         .x_y(model.player.position.x, model.player.position.y)
         .rotate(model.player.rotation)
         .color(WHITE);
+
+   
+//    println!("{:?},{:?}",model.player.position.x, win.left());
+    if model.player.position.x + SPACESHIP_PEAK > (win.right()){
+        let new_pos_x = model.player.position.x - WINDOW_SIZE.0 as f32;
+        draw.quad()
+            .points(point1,point2,point3,point4)
+            .x_y(new_pos_x, model.player.position.y)
+            .rotate(model.player.rotation)
+            .color(GREEN);
+    }
+    else if model.player.position.x - (SPACESHIP_PEAK) <= (win.left()){
+        let new_pos_x = model.player.position.x + WINDOW_SIZE.0 as f32;
+        draw.quad()
+            .points(point1,point2,point3,point4)
+            .x_y(new_pos_x, model.player.position.y)
+            .rotate(model.player.rotation)
+            .color(GREEN);
+    }
 
     for missile in &model.player.missile{
         draw.rect()

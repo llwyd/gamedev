@@ -304,9 +304,8 @@ fn view(app: &App, model: &Model, frame: Frame){
         .rotate(model.player.rotation)
         .color(WHITE);
 
-   
-//    println!("{:?},{:?}",model.player.position.x, win.left());
-    if model.player.position.x + SPACESHIP_PEAK > (win.right()){
+    let true_rotation = model.player.rotation + deg_to_rad(90.0);
+    if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) > (win.right()){
         let new_pos_x = model.player.position.x - WINDOW_SIZE.0 as f32;
         draw.quad()
             .points(point1,point2,point3,point4)
@@ -314,7 +313,7 @@ fn view(app: &App, model: &Model, frame: Frame){
             .rotate(model.player.rotation)
             .color(GREEN);
     }
-    else if model.player.position.x - (SPACESHIP_PEAK) <= (win.left()){
+    else if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) <= (win.left()){
         let new_pos_x = model.player.position.x + WINDOW_SIZE.0 as f32;
         draw.quad()
             .points(point1,point2,point3,point4)

@@ -332,7 +332,26 @@ fn view(app: &App, model: &Model, frame: Frame){
     let win = app.window_rect();
     let draw = app.draw();
     draw.background().color(BLACK);
+    
 
+    if model.player.thrust{
+        let point5 = pt2(-7.0,-10.0);
+        let point6 = pt2(7.0,-10.0);
+        let point7 = pt2(0.0,-40.0);
+        draw.tri()
+            .points(point5,point6,point7)
+            .x_y(model.player.position.x, model.player.position.y)
+            .rotate(model.player.rotation)
+            .color(RED);
+        let point8 = pt2(-6.0,-10.0);
+        let point9 = pt2(6.0,-10.0);
+        let point10 = pt2(0.0,-30.0);
+        draw.tri()
+            .points(point8,point9,point10)
+            .x_y(model.player.position.x, model.player.position.y)
+            .rotate(model.player.rotation)
+            .color(YELLOW);
+    }
     let point1 = pt2(-(SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
     let point2 = pt2(0.0, -SPACESHIP_PEAK);
     let point3 = pt2((SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));

@@ -222,12 +222,32 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
     has_hit
 }
 
+fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
+    let mut has_hit = false;
 
+    for asteroid in asteroids{
+        let left_edge:bool = (player.position.x) > (asteroid.position.x - (asteroid.size / 2.0));
+        let right_edge:bool = (player.position.x) < (asteroid.position.x + (asteroid.size / 2.0));
+        let top_edge:bool = (player.position.y) < (asteroid.position.y + (asteroid.size / 2.0));
+        let bottom_edge:bool = (player.position.y) > (asteroid.position.y - (asteroid.size / 2.0));
+
+        if left_edge && right_edge && top_edge && bottom_edge
+        {
+            println!("CRASH!");
+            has_hit = true;
+        }
+    }
+
+    has_hit
+}
 
 fn update(app: &App, model: &mut Model, update: Update) {
     let win = app.window_rect();
+
+    /* First, has the model crashed into anything? */
+    let crashed = has_ship_hit_asteroid(&model.player, &model.asteroid);
+
     model.player.rotation += model.player.rotation_inc;
-    
     if model.player.thrust{
         model.player.thrust_rotation = model.player.rotation;
         model.player.thrust_counter = 0;

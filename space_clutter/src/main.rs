@@ -225,12 +225,32 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
 
 
 fn update(app: &App, model: &mut Model, update: Update) {
-
+    let win = app.window_rect();
     model.player.rotation += model.player.rotation_inc;
     
     if model.player.thrust{
         model.player.thrust_rotation = model.player.rotation;
         model.player.thrust_counter = 0;
+    }
+
+    /* Handle wrapping across boundaries */
+    let true_rotation = model.player.rotation + deg_to_rad(90.0);
+    if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) > (win.right()){
+        let new_pos_x = model.player.position.x - WINDOW_SIZE.0 as f32;
+        model.player.position.x = new_pos_x;
+    }
+    else if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) < (win.left()){
+        let new_pos_x = model.player.position.x + WINDOW_SIZE.0 as f32;
+        model.player.position.x = new_pos_x;
+    }
+
+    if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) > win.top(){
+        let new_pos_y = model.player.position.y - WINDOW_SIZE.1 as f32;
+        model.player.position.y = new_pos_y;
+    }
+    else if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) < win.bottom(){
+        let new_pos_y = model.player.position.y + WINDOW_SIZE.1 as f32;
+        model.player.position.y = new_pos_y;
     }
 
     //let exp = (model.player.thrust_counter as f32 * -0.012).exp();
@@ -304,7 +324,7 @@ fn view(app: &App, model: &Model, frame: Frame){
         .rotate(model.player.rotation)
         .color(WHITE);
 
-    let true_rotation = model.player.rotation + deg_to_rad(90.0);
+    let true_rotation = model.player.rotation + deg_to_rad(90.0 + 180.0);
     if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) > (win.right()){
         let new_pos_x = model.player.position.x - WINDOW_SIZE.0 as f32;
         draw.quad()
@@ -313,11 +333,28 @@ fn view(app: &App, model: &Model, frame: Frame){
             .rotate(model.player.rotation)
             .color(GREEN);
     }
-    else if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) <= (win.left()){
+    else if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) < (win.left()){
         let new_pos_x = model.player.position.x + WINDOW_SIZE.0 as f32;
         draw.quad()
             .points(point1,point2,point3,point4)
             .x_y(new_pos_x, model.player.position.y)
+            .rotate(model.player.rotation)
+            .color(GREEN);
+    }
+    
+    if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) > (win.top()){
+        let new_pos_y = model.player.position.y - WINDOW_SIZE.1 as f32;
+        draw.quad()
+            .points(point1,point2,point3,point4)
+            .x_y(model.player.position.x, new_pos_y)
+            .rotate(model.player.rotation)
+            .color(GREEN);
+    }
+    else if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) < (win.bottom()){
+        let new_pos_y = model.player.position.y + WINDOW_SIZE.1 as f32;
+        draw.quad()
+            .points(point1,point2,point3,point4)
+            .x_y(model.player.position.x, new_pos_y)
             .rotate(model.player.rotation)
             .color(GREEN);
     }
@@ -337,7 +374,7 @@ fn view(app: &App, model: &Model, frame: Frame){
             .color(WHITE);
     }
     
-    let score = format!("Score {}", model.player.score);
+    let score = format!("Score: {}", model.player.score);
     draw.text(&score)
         .font_size(40)
         .xy(pt2(win.right() - 80.0 , win.bottom() + 30.0));

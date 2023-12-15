@@ -225,11 +225,15 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
 fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
     let mut has_hit = false;
 
+    let true_rotation = player.rotation + deg_to_rad(90.0);
+    let true_x = player.position.x + (SPACESHIP_PEAK * true_rotation.cos());
+    let true_y = player.position.y + (SPACESHIP_PEAK * true_rotation.sin());
+    
     for asteroid in asteroids{
-        let left_edge:bool = (player.position.x) > (asteroid.position.x - (asteroid.size / 2.0));
-        let right_edge:bool = (player.position.x) < (asteroid.position.x + (asteroid.size / 2.0));
-        let top_edge:bool = (player.position.y) < (asteroid.position.y + (asteroid.size / 2.0));
-        let bottom_edge:bool = (player.position.y) > (asteroid.position.y - (asteroid.size / 2.0));
+        let left_edge:bool = (true_x) > (asteroid.position.x - (asteroid.size / 2.0));
+        let right_edge:bool = (true_x) < (asteroid.position.x + (asteroid.size / 2.0));
+        let top_edge:bool = (true_y) < (asteroid.position.y + (asteroid.size / 2.0));
+        let bottom_edge:bool = (true_y) > (asteroid.position.y - (asteroid.size / 2.0));
 
         if left_edge && right_edge && top_edge && bottom_edge
         {
@@ -239,6 +243,10 @@ fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
     }
 
     has_hit
+}
+
+fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
+    pt2(0.0, 0.0)
 }
 
 fn update(app: &App, model: &mut Model, update: Update) {

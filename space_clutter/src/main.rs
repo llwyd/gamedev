@@ -14,11 +14,13 @@ const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
-const MAX_ASTEROIDS: u32 = 1;
+const MAX_ASTEROIDS: u32 = 2;
 const ASTEROID_MAX_SIZE: f32 = 40.0;
 const ASTEROID_MIN_SIZE: f32 = 20.0;
 const ASTEROID_MAX_SPEED: f32 = 11.25;
 const ASTEROID_MIN_SPEED: f32 = 3.6;
+const ASTEROID_WIGGLE: f32 = ASTEROID_MAX_SIZE + 20.0;
+
 
 #[derive(Copy,Clone)]
 enum State{
@@ -246,9 +248,48 @@ fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
 }
 
 fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
-    let mut new_x = random_range((WINDOW_SIZE.0 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.0 as f32 / 2.0) - ASTEROID_MAX_SIZE);
-    let mut new_y = random_range((WINDOW_SIZE.1 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.1 as f32 / 2.0) - ASTEROID_MAX_SIZE);
-    
+    let mut valid_position = false;
+
+    let mut new_x = 0.0;
+    let mut new_y = 0.0;
+
+    while !valid_position{
+        let mut valid_spaceship_pos = false;
+        while !valid_spaceship_pos{
+            new_x = random_range((WINDOW_SIZE.0 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.0 as f32 / 2.0) - ASTEROID_MAX_SIZE);
+            new_y = random_range((WINDOW_SIZE.1 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.1 as f32 / 2.0) - ASTEROID_MAX_SIZE);
+        
+            let left_edge:bool = new_x - ASTEROID_WIGGLE < player.position.x - ASTEROID_MAX_SIZE;
+            let right_edge:bool = new_x + ASTEROID_WIGGLE > player.position.x + ASTEROID_MAX_SIZE;
+            let top_edge:bool = new_y + ASTEROID_WIGGLE > player.position.y + ASTEROID_MAX_SIZE;
+            let bottom_edge:bool = new_y - ASTEROID_WIGGLE < player.position.y - ASTEROID_MAX_SIZE;
+            if left_edge || right_edge
+            {
+                if top_edge || bottom_edge {
+                    valid_spaceship_pos = true;
+                }
+            }
+        }
+
+        if asteroids.len() < 1{
+            valid_position = true;
+        }
+        else
+        {
+            valid_position = true;
+            for asteroid in asteroids{
+                let left_edge:bool = new_x - ASTEROID_WIGGLE > asteroid.position.x - ASTEROID_MAX_SIZE;
+                let right_edge:bool = new_x + ASTEROID_WIGGLE < asteroid.position.x + ASTEROID_MAX_SIZE;
+                let top_edge:bool = new_y + ASTEROID_WIGGLE < asteroid.position.y + ASTEROID_MAX_SIZE;
+                let bottom_edge:bool = new_y - ASTEROID_WIGGLE > asteroid.position.y - ASTEROID_MAX_SIZE;
+                if left_edge && right_edge && top_edge && bottom_edge{
+                    valid_position = false;
+                    break;
+                }
+            }
+        }
+    }
+
     pt2(new_x, new_y)
 }
 
@@ -307,9 +348,6 @@ fn update(app: &App, model: &mut Model, update: Update) {
     /* Generate new asteroid if needed */
     if model.asteroid.len() < MAX_ASTEROIDS as usize
     {
-        let new_x = random_range(WINDOW_SIZE.0 as f32 / -2.0, WINDOW_SIZE.0 as f32 / 2.0);
-        let new_y = random_range(WINDOW_SIZE.1 as f32 / -2.0, WINDOW_SIZE.1 as f32 / 2.0);
-       
         let new_size = random_range(ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE);
         
         let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);

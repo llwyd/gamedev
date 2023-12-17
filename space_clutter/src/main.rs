@@ -14,7 +14,7 @@ const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
-const MAX_ASTEROIDS: u32 = 2;
+const MAX_ASTEROIDS: u32 = 5;
 const ASTEROID_MAX_SIZE: f32 = 40.0;
 const ASTEROID_MIN_SIZE: f32 = 20.0;
 const ASTEROID_MAX_SPEED: f32 = 11.25;
@@ -259,10 +259,10 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
             new_x = random_range((WINDOW_SIZE.0 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.0 as f32 / 2.0) - ASTEROID_MAX_SIZE);
             new_y = random_range((WINDOW_SIZE.1 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.1 as f32 / 2.0) - ASTEROID_MAX_SIZE);
         
-            let left_edge:bool = new_x - ASTEROID_WIGGLE < player.position.x - ASTEROID_MAX_SIZE;
-            let right_edge:bool = new_x + ASTEROID_WIGGLE > player.position.x + ASTEROID_MAX_SIZE;
-            let top_edge:bool = new_y + ASTEROID_WIGGLE > player.position.y + ASTEROID_MAX_SIZE;
-            let bottom_edge:bool = new_y - ASTEROID_WIGGLE < player.position.y - ASTEROID_MAX_SIZE;
+            let left_edge:bool = new_x < player.position.x - ASTEROID_MAX_SIZE;
+            let right_edge:bool = new_x > player.position.x + ASTEROID_MAX_SIZE;
+            let top_edge:bool = new_y > player.position.y + ASTEROID_MAX_SIZE;
+            let bottom_edge:bool = new_y < player.position.y - ASTEROID_MAX_SIZE;
             if left_edge || right_edge
             {
                 if top_edge || bottom_edge {
@@ -278,10 +278,10 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
         {
             valid_position = true;
             for asteroid in asteroids{
-                let left_edge:bool = new_x - ASTEROID_WIGGLE > asteroid.position.x - ASTEROID_MAX_SIZE;
-                let right_edge:bool = new_x + ASTEROID_WIGGLE < asteroid.position.x + ASTEROID_MAX_SIZE;
-                let top_edge:bool = new_y + ASTEROID_WIGGLE < asteroid.position.y + ASTEROID_MAX_SIZE;
-                let bottom_edge:bool = new_y - ASTEROID_WIGGLE > asteroid.position.y - ASTEROID_MAX_SIZE;
+                let left_edge:bool = new_x > asteroid.position.x - ASTEROID_WIGGLE;
+                let right_edge:bool = new_x < asteroid.position.x + ASTEROID_WIGGLE;
+                let top_edge:bool = new_y < asteroid.position.y + ASTEROID_WIGGLE;
+                let bottom_edge:bool = new_y > asteroid.position.y - ASTEROID_WIGGLE;
                 if left_edge && right_edge && top_edge && bottom_edge{
                     valid_position = false;
                     break;

@@ -246,7 +246,10 @@ fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
 }
 
 fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
-    pt2(0.0, 0.0)
+    let mut new_x = random_range((WINDOW_SIZE.0 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.0 as f32 / 2.0) - ASTEROID_MAX_SIZE);
+    let mut new_y = random_range((WINDOW_SIZE.1 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.1 as f32 / 2.0) - ASTEROID_MAX_SIZE);
+    
+    pt2(new_x, new_y)
 }
 
 fn update(app: &App, model: &mut Model, update: Update) {
@@ -312,7 +315,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
         let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
 
         let asteroid = Asteroid{
-            position: pt2(new_x, new_y),
+            position: new_point(&model.player, &model.asteroid),
             rotation: 0.0,
             rotation_speed: deg_to_rad(new_speed),
             size: new_size,

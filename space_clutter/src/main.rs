@@ -15,8 +15,8 @@ const MISSILE_SIZE: f32 = 4.0;
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
 const MAX_ASTEROIDS: u32 = 5;
-const ASTEROID_MAX_SIZE: f32 = 40.0;
-const ASTEROID_MIN_SIZE: f32 = 20.0;
+const ASTEROID_MAX_SIZE: f32 = 80.0;
+const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 11.25;
 const ASTEROID_MIN_SPEED: f32 = 3.6;
 const ASTEROID_WIGGLE: f32 = ASTEROID_MAX_SIZE + 20.0;

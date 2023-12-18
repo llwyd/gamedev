@@ -6,7 +6,7 @@ const SPACESHIP_PEAK: f32 = 16.25;
 const SPACESHIP_TROUGH: f32 = 6.5;
 const SPACESHIP_WIDTH: f32 = 30.0;
 const SPACESHIP_HEIGHT: f32 = 39.0;
-const SPACESHIP_SPEED: f32 = 4.0;
+const SPACESHIP_SPEED: f32 = 3.0;
 const ANGLE_INC: f32 = 3.6;
 const MAX_PROJECTILES: u32 = 20;
 const MISSILE_SPEED: f32 = 8.0;
@@ -17,8 +17,8 @@ const MISSILE_SIZE: f32 = 4.0;
 const MAX_ASTEROIDS: u32 = 5;
 const ASTEROID_MAX_SIZE: f32 = 80.0;
 const ASTEROID_MIN_SIZE: f32 = 40.0;
-const ASTEROID_MAX_SPEED: f32 = 11.25;
-const ASTEROID_MIN_SPEED: f32 = 3.6;
+const ASTEROID_MAX_SPEED: f32 = 4.0;
+const ASTEROID_MIN_SPEED: f32 = 0.1;
 const ASTEROID_WIGGLE: f32 = ASTEROID_MAX_SIZE + 20.0;
 
 
@@ -326,7 +326,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
     }
 
     //let exp = (model.player.thrust_counter as f32 * -0.012).exp();
-    let exp = (model.player.thrust_counter as f32 * -0.5).exp();
+    let exp = (model.player.thrust_counter as f32 * -0.5).exp() + 0.2;
     model.player.position.x += -SPACESHIP_SPEED * model.player.thrust_rotation.sin() * exp;
     model.player.position.y += SPACESHIP_SPEED * model.player.thrust_rotation.cos() * exp;
     if model.player.thrust_counter < u32::MAX{

@@ -358,8 +358,10 @@ fn update(app: &App, model: &mut Model, update: Update) {
             let angle = deg_to_rad(i as f32 * angle_inc);
             let radius = asteroid.size / 2.0;
 
-            let x = angle.sin() * radius;
-            let y = angle.cos() * radius;
+            let real_radius = random_range( radius * 0.80, radius * 1.20);
+
+            let x = angle.sin() * real_radius;
+            let y = angle.cos() * real_radius;
             
             asteroid.points.push(pt2(x,y));
         }

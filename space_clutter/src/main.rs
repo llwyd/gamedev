@@ -59,6 +59,8 @@ struct Asteroid{
     rotation: f32,
     rotation_speed: f32,
     size: f32,
+    num_points: u32,
+    points: Vec<Point2>
 }
 
 struct Projectile{
@@ -110,15 +112,6 @@ fn model(app: &App) -> Model {
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
     };
-
-    let asteroid = Asteroid{
-        position: pt2(100.0, 100.0),
-        rotation: 0.0,
-        rotation_speed: 36.0,
-        size: ASTEROID_MAX_SIZE
-    };
-    
-    model.asteroid.push(asteroid);
 
     model
 }
@@ -352,13 +345,26 @@ fn update(app: &App, model: &mut Model, update: Update) {
         
         let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
 
-        let asteroid = Asteroid{
+        let mut asteroid = Asteroid{
             position: new_point(&model.player, &model.asteroid),
             rotation: 0.0,
             rotation_speed: deg_to_rad(new_speed),
             size: new_size,
+            points: Vec::new(),
+            num_points: 8,
         };
-        
+        let angle_inc:f32 = (360 / asteroid.num_points) as f32;
+        for i in 0..asteroid.num_points{
+            let angle = deg_to_rad(i as f32 * angle_inc);
+            let radius = asteroid.size / 2.0;
+
+            let x = angle.sin() * radius;
+            let y = angle.cos() * radius;
+            
+            asteroid.points.push(pt2(x,y));
+        }
+        asteroid.points.push(asteroid.points[0]);
+
         model.asteroid.push(asteroid);
     }
 }
@@ -454,14 +460,16 @@ fn view(app: &App, model: &Model, frame: Frame){
             .color(WHITE);
     }
 
-    for asteroid in &model.asteroid{
-        draw.rect()
+    for asteroid in &model.asteroid{ 
+        let point = asteroid.points.clone();
+        draw.polyline()
             .xy(asteroid.position)
-            .w_h(asteroid.size, asteroid.size)
+            .weight(5.0)
+            .color(WHITE)
             .rotate(asteroid.rotation)
-            .color(WHITE);
+            .points(asteroid.points.clone());
     }
-    
+
     let score = format!("Score: {}", model.player.score);
     draw.text(&score)
         .font_size(40)

@@ -286,6 +286,37 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
     pt2(new_x, new_y)
 }
 
+fn generate_asteroid(position: Point2, num_points: u32) -> Asteroid{
+    let new_size = random_range(ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE);
+    
+    let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
+
+    let mut asteroid = Asteroid{
+        position: position,
+        rotation: 0.0,
+        rotation_speed: deg_to_rad(new_speed),
+        size: new_size,
+        points: Vec::new(),
+        num_points: 8,
+    };
+    let angle_inc:f32 = (360 / asteroid.num_points) as f32;
+    for i in 0..asteroid.num_points{
+        let angle = deg_to_rad(i as f32 * angle_inc);
+        let radius = asteroid.size / 2.0;
+
+        let real_radius = random_range( radius * 0.80, radius * 1.20);
+
+        let x = angle.sin() * real_radius;
+        let y = angle.cos() * real_radius;
+        
+        asteroid.points.push(pt2(x,y));
+    }
+
+    /* Connect the last dot */
+    asteroid.points.push(asteroid.points[0]);
+    asteroid
+}
+
 fn update(app: &App, model: &mut Model, update: Update) {
     let win = app.window_rect();
 
@@ -341,31 +372,8 @@ fn update(app: &App, model: &mut Model, update: Update) {
     /* Generate new asteroid if needed */
     if model.asteroid.len() < MAX_ASTEROIDS as usize
     {
-        let new_size = random_range(ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE);
-        
-        let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
-
-        let mut asteroid = Asteroid{
-            position: new_point(&model.player, &model.asteroid),
-            rotation: 0.0,
-            rotation_speed: deg_to_rad(new_speed),
-            size: new_size,
-            points: Vec::new(),
-            num_points: 8,
-        };
-        let angle_inc:f32 = (360 / asteroid.num_points) as f32;
-        for i in 0..asteroid.num_points{
-            let angle = deg_to_rad(i as f32 * angle_inc);
-            let radius = asteroid.size / 2.0;
-
-            let real_radius = random_range( radius * 0.80, radius * 1.20);
-
-            let x = angle.sin() * real_radius;
-            let y = angle.cos() * real_radius;
-            
-            asteroid.points.push(pt2(x,y));
-        }
-        asteroid.points.push(asteroid.points[0]);
+        let new_pt =  new_point(&model.player, &model.asteroid);
+        let asteroid = generate_asteroid(new_pt, 8);
 
         model.asteroid.push(asteroid);
     }
@@ -463,7 +471,6 @@ fn view(app: &App, model: &Model, frame: Frame){
     }
 
     for asteroid in &model.asteroid{ 
-        let point = asteroid.points.clone();
         draw.polyline()
             .xy(asteroid.position)
             .weight(5.0)

@@ -195,7 +195,7 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
     has_hit
 }
 
-fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32) -> bool{
+fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32, fragment: &mut Vec<Asteroid>) -> bool{
     let mut has_hit = false;
 
         for missile in &mut *missiles
@@ -211,6 +211,15 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
                 missile.hit = true;
                 has_hit = true;
                 *score += 1;
+                
+                let new_point_l = pt2(asteroid.position.x - (asteroid.size / 2.0), asteroid.position.y);
+                let asteroid_l = generate_asteroid(new_point_l, 6, ASTEROID_MIN_SIZE / 4.0, ASTEROID_MAX_SIZE / 4.0);
+                
+                let new_point_r = pt2(asteroid.position.x + (asteroid.size / 2.0), asteroid.position.y);
+                let asteroid_r = generate_asteroid(new_point_r, 6, ASTEROID_MIN_SIZE / 4.0, ASTEROID_MAX_SIZE / 4.0);
+
+                fragment.push(asteroid_l);
+                fragment.push(asteroid_r);
             }
         }
 
@@ -286,8 +295,8 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
     pt2(new_x, new_y)
 }
 
-fn generate_asteroid(position: Point2, num_points: u32) -> Asteroid{
-    let new_size = random_range(ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE);
+fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size: f32) -> Asteroid{
+    let new_size = random_range(min_size, max_size);
     
     let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
 
@@ -360,8 +369,15 @@ fn update(app: &App, model: &mut Model, update: Update) {
     for asteroid in &mut model.asteroid{
         asteroid.rotation += asteroid.rotation_speed;
     }
+    
+    let mut fragments:Vec<Asteroid> = Vec::new();
+    assert_eq!(fragments.len(), 0);
+    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score, &mut fragments));
 
-    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score));
+    for asteroid in fragments{
+        model.asteroid.push(asteroid);
+    }
+
     model.player.missile.retain(|missiles| !has_missile_hit_edge(missiles, app.window_rect()));
     
     for missile in &mut model.player.missile{
@@ -373,7 +389,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
     if model.asteroid.len() < MAX_ASTEROIDS as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
-        let asteroid = generate_asteroid(new_pt, 8);
+        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE);
 
         model.asteroid.push(asteroid);
     }

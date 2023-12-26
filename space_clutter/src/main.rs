@@ -19,6 +19,7 @@ const ASTEROID_MAX_SIZE: f32 = 80.0;
 const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 4.0;
 const ASTEROID_MIN_SPEED: f32 = -4.0;
+const ASTEROID_THICKNESS: f32 = 5.0;
 const ASTEROID_WIGGLE: f32 = ASTEROID_MAX_SIZE + 20.0;
 
 
@@ -304,7 +305,7 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
     
     let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
 
-    let mut thickness = 5.0;
+    let mut thickness = ASTEROID_THICKNESS;
     if fragment{
         thickness *= 0.4;
     }
@@ -315,7 +316,7 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
         rotation_speed: deg_to_rad(new_speed),
         size: new_size,
         points: Vec::new(),
-        num_points: 8,
+        num_points: num_points,
         thickness: thickness,
         fragment: fragment
     };

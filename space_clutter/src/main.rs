@@ -21,6 +21,7 @@ const ASTEROID_MAX_SPEED: f32 = 4.0;
 const ASTEROID_MIN_SPEED: f32 = -4.0;
 const ASTEROID_THICKNESS: f32 = 5.0;
 const ASTEROID_WIGGLE: f32 = ASTEROID_MAX_SIZE + 20.0;
+const ASTEROID_SPEED: f32 = 0.5;
 
 
 #[derive(Copy,Clone)]
@@ -63,6 +64,7 @@ struct Asteroid{
     num_points: u32,
     fragment: bool, // Whether it is a fragment or not
     thickness: f32,
+    thrust_rotation: f32,
     points: Vec<Point2>
 }
 
@@ -309,7 +311,7 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
     if fragment{
         thickness *= 0.4;
     }
-
+    let rotation = random_range(0.0, std::f32::consts::PI * 2.0);
     let mut asteroid = Asteroid{
         position: position,
         rotation: 0.0,
@@ -318,6 +320,7 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
         points: Vec::new(),
         num_points: num_points,
         thickness: thickness,
+        thrust_rotation: rotation,
         fragment: fragment
     };
     let angle_inc:f32 = (360 / asteroid.num_points) as f32;
@@ -350,7 +353,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
         model.player.thrust_counter = 0;
     }
 
-    /* Handle wrapping across boundaries */
+    /* Handle wrapping across boundaries for space ship */
     let true_rotation = model.player.rotation + deg_to_rad(90.0);
     if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) > (win.right()){
         let new_pos_x = model.player.position.x - WINDOW_SIZE.0 as f32;
@@ -379,7 +382,31 @@ fn update(app: &App, model: &mut Model, update: Update) {
     }
 
     for asteroid in &mut model.asteroid{
+
+        let true_rotation = asteroid.rotation + deg_to_rad(90.0); 
+        let asteroid_size = asteroid.size / 2.0;
+
+        if asteroid.position.x + (asteroid_size * true_rotation.cos()) > (win.right()){
+            let new_pos_x = asteroid.position.x - WINDOW_SIZE.0 as f32;
+            asteroid.position.x = new_pos_x;
+        }
+        else if asteroid.position.x + (asteroid_size * true_rotation.cos()) < (win.left()){
+            let new_pos_x = asteroid.position.x + WINDOW_SIZE.0 as f32;
+            asteroid.position.x = new_pos_x;
+        }
+        
+        if asteroid.position.y + (asteroid_size * true_rotation.sin()) > win.top(){
+            let new_pos_y = asteroid.position.y - WINDOW_SIZE.1 as f32;
+            asteroid.position.y = new_pos_y;
+        }
+        else if asteroid.position.y + (asteroid_size * true_rotation.sin()) < win.bottom(){
+            let new_pos_y = asteroid.position.y + WINDOW_SIZE.1 as f32;
+            asteroid.position.y = new_pos_y;
+        }
+        
         asteroid.rotation += asteroid.rotation_speed;
+        asteroid.position.x += -ASTEROID_SPEED * asteroid.thrust_rotation.sin();
+        asteroid.position.y += ASTEROID_SPEED * asteroid.thrust_rotation.cos();
     }
     
     let mut fragments:Vec<Asteroid> = Vec::new();

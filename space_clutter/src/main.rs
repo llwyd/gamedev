@@ -240,17 +240,45 @@ fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
     let true_x = player.position.x + (SPACESHIP_PEAK * true_rotation.cos());
     let true_y = player.position.y + (SPACESHIP_PEAK * true_rotation.sin());
     
+    let r_tail_x = player.position.x + ((SPACESHIP_WIDTH / 2.0) * true_rotation.cos());
+    let r_tail_y = player.position.y + (-(SPACESHIP_PEAK + SPACESHIP_TROUGH) * true_rotation.sin());
+    
+    let l_tail_x = player.position.x - ((SPACESHIP_WIDTH / 2.0) * true_rotation.cos());
+    let l_tail_y = player.position.y + (-(SPACESHIP_PEAK + SPACESHIP_TROUGH) * true_rotation.sin());
+
     for asteroid in asteroids{
+        /* Has peak hit asteroid? */
         let left_edge:bool = (true_x) > (asteroid.position.x - (asteroid.size / 2.0));
         let right_edge:bool = (true_x) < (asteroid.position.x + (asteroid.size / 2.0));
         let top_edge:bool = (true_y) < (asteroid.position.y + (asteroid.size / 2.0));
         let bottom_edge:bool = (true_y) > (asteroid.position.y - (asteroid.size / 2.0));
+        
+        let l_left_edge:bool = (l_tail_x) > (asteroid.position.x - (asteroid.size / 2.0));
+        let l_right_edge:bool = (l_tail_x) < (asteroid.position.x + (asteroid.size / 2.0));
+        let l_top_edge:bool = (l_tail_y) < (asteroid.position.y + (asteroid.size / 2.0));
+        let l_bottom_edge:bool = (l_tail_y) > (asteroid.position.y - (asteroid.size / 2.0));
+        
+        let r_left_edge:bool = (l_tail_x) > (asteroid.position.x - (asteroid.size / 2.0));
+        let r_right_edge:bool = (l_tail_x) < (asteroid.position.x + (asteroid.size / 2.0));
+        let r_top_edge:bool = (l_tail_y) < (asteroid.position.y + (asteroid.size / 2.0));
+        let r_bottom_edge:bool = (l_tail_y) > (asteroid.position.y - (asteroid.size / 2.0));
 
         if left_edge && right_edge && top_edge && bottom_edge
         {
             println!("CRASH!");
             has_hit = true;
         }
+        else if l_left_edge && l_right_edge && l_top_edge && l_bottom_edge
+        {
+            println!("LEFT CRASH!");
+            has_hit = true;
+        }
+        else if r_left_edge && r_right_edge && r_top_edge && r_bottom_edge
+        {
+            println!("RIGHT CRASH!");
+            has_hit = true;
+        }
+        
     }
 
     has_hit

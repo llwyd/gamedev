@@ -117,10 +117,26 @@ fn model(app: &App) -> Model {
         asteroid: Vec::new(),
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
-        game_state: State::Idle,
+        game_state: State::Menu,
     };
 
     model
+}
+
+
+fn reset(app: &App, model: &mut Model){
+    model.player.position = pt2(0.0, 0.0);
+    model.player.rotation = 0.0;
+    model.player.rotation_inc = 0.0;
+    model.player.score = 0;
+    model.player.thrust = false;
+    model.player.thrust_rotation = 0.0;
+    model.player.thrust_counter = 0;
+    model.player.missile = Vec::new();
+    
+    model.asteroid = Vec::new();
+    model.last_event = KeyReleased(Key::Escape);
+    model.game_state = State::Idle;
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -157,7 +173,7 @@ fn window_event(app: &App, model: &mut Model, event: WindowEvent)
 fn menu_event(app: &App, model: &mut Model, event: WindowEvent)
 {
     match event {
-        KeyReleased(_key) => { model.game_state = State::Idle }
+        KeyPressed(_key) => { reset(app, model) }
         _ => {}
     }
 }
@@ -552,13 +568,15 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
-    let game_over = "SPACE CLUTTER";
+    let game_over = format!("SPACE CLUTTER");
     draw.text(&game_over)
+        .no_line_wrap()
         .font_size(75)
-        .xy(pt2(-120.0, win.top() - 100.0)); 
+        .xy(pt2(0.0, win.top() - 100.0)); 
     
-    let anykey = format!("[press any key to start]");
+    let anykey = format!("[ press any key to start ]");
     draw.text(&anykey)
+        .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, -100.0));
 

@@ -532,12 +532,53 @@ fn view(app: &App, model: &Model, frame: Frame){
             .color(WHITE)
             .rotate(asteroid.rotation)
             .points(asteroid.points.clone());
+        
+        let true_rotation = asteroid.rotation + deg_to_rad(90.0 + 180.0);
+        let asteroid_size = asteroid.size / 2.0;
+        
+        if asteroid.position.x + (asteroid.size) >= (win.right()){
+            let new_pos_x = asteroid.position.x - WINDOW_SIZE.0 as f32;
+            draw.polyline()
+                .x_y(new_pos_x, asteroid.position.y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+        else if asteroid.position.x - (asteroid.size) <= (win.left()){
+            let new_pos_x = asteroid.position.x + WINDOW_SIZE.0 as f32;
+            draw.polyline()
+                .x_y(new_pos_x, asteroid.position.y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+        
+        if asteroid.position.y + (asteroid.size) >= (win.top()){
+            let new_pos_y = asteroid.position.y - WINDOW_SIZE.1 as f32;
+            draw.polyline()
+                .x_y(asteroid.position.x, new_pos_y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+        else if asteroid.position.y - (asteroid.size) <= (win.bottom()){
+            let new_pos_y = asteroid.position.y + WINDOW_SIZE.1 as f32;
+            draw.polyline()
+                .x_y(asteroid.position.x, new_pos_y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
     }
 
     let score = format!("Score: {}", model.player.score);
     draw.text(&score)
         .font_size(40)
-        .xy(pt2(win.right() - 80.0 , win.bottom() + 30.0));
+        .xy(pt2(win.right() - 120.0 , win.bottom() + 30.0));
 
     draw.to_frame(app, &frame).unwrap();
 }

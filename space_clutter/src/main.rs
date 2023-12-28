@@ -27,8 +27,8 @@ const ASTEROID_SPEED: f32 = 0.5;
 #[derive(Copy,Clone)]
 enum State{
     Idle, // Normal game 
-//    GameOver,
-//    Menu,
+    GameOver,
+    Menu,
 }
 
 #[derive(Copy,Clone)]
@@ -81,6 +81,7 @@ struct Model {
     asteroid: Vec<Asteroid>,
     last_event: WindowEvent,
     state: StateFunc,
+    game_state:State,
 }
 
 fn main() {
@@ -116,6 +117,7 @@ fn model(app: &App) -> Model {
         asteroid: Vec::new(),
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
+        game_state: State::Idle,
     };
 
     model
@@ -144,6 +146,23 @@ fn keyrelease_to_state(key: Key) -> StateEvents{
 }
 
 fn window_event(app: &App, model: &mut Model, event: WindowEvent)
+{
+    match model.game_state{
+        State::Idle => idle_event(app, model, event),
+        State::GameOver => menu_event(app, model, event),
+        State::Menu => menu_event(app, model, event),
+    }
+}
+
+fn menu_event(app: &App, model: &mut Model, event: WindowEvent)
+{
+    match event {
+        KeyReleased(_key) => { model.game_state = State::Idle }
+        _ => {}
+    }
+}
+
+fn idle_event(app: &App, model: &mut Model, event: WindowEvent)
 {
     if model.last_event != event
     {
@@ -369,11 +388,30 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
     asteroid
 }
 
-fn update(app: &App, model: &mut Model, update: Update) {
+fn update(app: &App, model: &mut Model, update: Update) { 
+    match model.game_state{
+        State::Idle => idle_update(app, model, update),
+        State::GameOver => gameover_update(app, model, update),
+        State::Menu => gameover_update(app, model, update),
+        _ => assert!(false),
+    }
+}
+
+fn gameover_update(_app: &App, _model: &mut Model, _update: Update) {
+}
+
+fn menu_update(_app: &App, _model: &mut Model, _update: Update) {
+}
+
+fn idle_update(app: &App, model: &mut Model, update: Update) {
     let win = app.window_rect();
 
     /* First, has the model crashed into anything? */
     let crashed = has_ship_hit_asteroid(&model.player, &model.asteroid);
+
+    if crashed{
+        model.game_state = State::GameOver;
+    }
 
     model.player.rotation += model.player.rotation_inc;
     if model.player.thrust{
@@ -477,6 +515,57 @@ fn state_idle(player: &mut Player, event:StateEvents)
 }
 
 fn view(app: &App, model: &Model, frame: Frame){
+    match model.game_state{
+        State::Idle => idle_view(app, model, frame),
+        State::GameOver => gameover_view(app, model, frame),
+        State::Menu => menu_view(app, model, frame),
+        _ => assert!(false),
+    }
+}
+
+fn gameover_view(app: &App, model: &Model, frame: Frame){
+    let win = app.window_rect();
+    let draw = app.draw();
+    draw.background().color(BLACK);
+
+    let game_over = "GAME OVER";
+    draw.text(&game_over)
+        .font_size(75)
+        .xy(pt2(-120.0, win.top() - 100.0));
+    
+    /* Draw score */
+    let score = format!("Score {}", model.player.score);
+    draw.text(&score)
+        .font_size(60)
+        .xy(pt2(120.0 , win.top() - 100.0));
+    
+    let anykey = format!("press any key to retry");
+    draw.text(&anykey)
+        .font_size(20)
+        .xy(pt2(0.0, -100.0));
+
+    draw.to_frame(app, &frame).unwrap();
+}
+
+fn menu_view(app: &App, model: &Model, frame: Frame){
+    let win = app.window_rect();
+    let draw = app.draw();
+    draw.background().color(BLACK);
+
+    let game_over = "SPACE CLUTTER";
+    draw.text(&game_over)
+        .font_size(75)
+        .xy(pt2(-120.0, win.top() - 100.0)); 
+    
+    let anykey = format!("[press any key to start]");
+    draw.text(&anykey)
+        .font_size(20)
+        .xy(pt2(0.0, -100.0));
+
+    draw.to_frame(app, &frame).unwrap();
+}
+
+fn idle_view(app: &App, model: &Model, frame: Frame){
     let win = app.window_rect();
     let draw = app.draw();
     draw.background().color(BLACK);

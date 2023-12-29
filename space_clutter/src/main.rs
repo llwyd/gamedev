@@ -549,11 +549,14 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
+    let actual_font: Font = Font::from_bytes(model.raw_font.clone()).unwrap();
+    
     let game_over = "GAME OVER";
     draw.text(&game_over)
+        .font(actual_font)
         .no_line_wrap()
-        .font_size(75)
-        .xy(pt2(0.0, win.top() - 50.0)); 
+        .font_size(65)
+        .xy(pt2(0.0, win.top() - 75.0)); 
     
     /* Draw score */
     let score = format!("Score: {}", model.player.score);

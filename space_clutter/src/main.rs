@@ -546,20 +546,35 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
 
     let game_over = "GAME OVER";
     draw.text(&game_over)
+        .no_line_wrap()
         .font_size(75)
-        .xy(pt2(-120.0, win.top() - 100.0));
+        .xy(pt2(0.0, win.top() - 50.0)); 
     
     /* Draw score */
-    let score = format!("Score {}", model.player.score);
+    let score = format!("Score: {}", model.player.score);
     draw.text(&score)
+        .no_line_wrap()
         .font_size(60)
-        .xy(pt2(120.0 , win.top() - 100.0));
+        .xy(pt2(0.0 , win.top() - 150.0));
     
     let anykey = format!("press any key to retry");
     draw.text(&anykey)
+        .no_line_wrap()
         .font_size(20)
-        .xy(pt2(0.0, -100.0));
+        .xy(pt2(0.0, win.top() -250.0));
 
+
+    let credits = format!("Coding + Music by T.L. '23");
+    draw.text(&credits)
+        .no_line_wrap()
+        .font_size(20)
+        .xy(pt2(0.0, win.bottom() + 150.0));
+    
+    let credits = format!("llwyd.io");
+    draw.text(&credits)
+        .no_line_wrap()
+        .font_size(20)
+        .xy(pt2(0.0, win.bottom() + 100.0));
     draw.to_frame(app, &frame).unwrap();
 }
 
@@ -568,8 +583,8 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
-    let game_over = format!("SPACE CLUTTER");
-    draw.text(&game_over)
+    let title = format!("SPACE CLUTTER");
+    draw.text(&title)
         .no_line_wrap()
         .font_size(75)
         .xy(pt2(0.0, win.top() - 100.0)); 

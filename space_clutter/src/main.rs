@@ -84,6 +84,7 @@ struct Model {
     state: StateFunc,
     game_state:State,
     raw_font: Vec<u8>,
+    score_font: Vec<u8>,
 }
 
 fn main() {
@@ -121,6 +122,7 @@ fn model(app: &App) -> Model {
         state: state_idle,
         game_state: State::Menu,
         raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
+        score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
     };
 
     model
@@ -731,9 +733,13 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
         }
     }
 
+    let actual_font: Font = Font::from_bytes(model.score_font.clone()).unwrap();
+    
     let score = format!("Score: {}", model.player.score);
     draw.text(&score)
-        .font_size(40)
+        .font(actual_font)
+        .font_size(20)
+        .no_line_wrap()
         .xy(pt2(win.right() - 120.0 , win.bottom() + 30.0));
 
     draw.to_frame(app, &frame).unwrap();

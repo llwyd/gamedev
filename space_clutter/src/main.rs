@@ -413,7 +413,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
     match model.game_state{
         State::Idle => idle_update(app, model, update),
         State::GameOver => gameover_update(app, model, update),
-        State::Menu => gameover_update(app, model, update),
+        State::Menu => menu_update(app, model, update),
         _ => assert!(false),
     }
 }
@@ -421,7 +421,44 @@ fn update(app: &App, model: &mut Model, update: Update) {
 fn gameover_update(_app: &App, _model: &mut Model, _update: Update) {
 }
 
-fn menu_update(_app: &App, _model: &mut Model, _update: Update) {
+fn menu_update(app: &App, model: &mut Model, _update: Update) {
+    let win = app.window_rect();
+    for asteroid in &mut model.asteroid{
+
+        let true_rotation = asteroid.rotation + deg_to_rad(90.0); 
+        let asteroid_size = asteroid.size / 2.0;
+
+        if asteroid.position.x + (asteroid_size * true_rotation.cos()) > (win.right()){
+            let new_pos_x = asteroid.position.x - WINDOW_SIZE.0 as f32;
+            asteroid.position.x = new_pos_x;
+        }
+        else if asteroid.position.x + (asteroid_size * true_rotation.cos()) < (win.left()){
+            let new_pos_x = asteroid.position.x + WINDOW_SIZE.0 as f32;
+            asteroid.position.x = new_pos_x;
+        }
+        
+        if asteroid.position.y + (asteroid_size * true_rotation.sin()) > win.top(){
+            let new_pos_y = asteroid.position.y - WINDOW_SIZE.1 as f32;
+            asteroid.position.y = new_pos_y;
+        }
+        else if asteroid.position.y + (asteroid_size * true_rotation.sin()) < win.bottom(){
+            let new_pos_y = asteroid.position.y + WINDOW_SIZE.1 as f32;
+            asteroid.position.y = new_pos_y;
+        }
+        
+        asteroid.rotation += asteroid.rotation_speed;
+        asteroid.position.x += -ASTEROID_SPEED * asteroid.thrust_rotation.sin();
+        asteroid.position.y += ASTEROID_SPEED * asteroid.thrust_rotation.cos();
+    }
+    
+    /* Generate new asteroid if needed */
+    if model.asteroid.len() < MAX_ASTEROIDS as usize
+    {
+        let new_pt =  new_point(&model.player, &model.asteroid);
+        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
+
+        model.asteroid.push(asteroid);
+    }
 }
 
 fn idle_update(app: &App, model: &mut Model, update: Update) {
@@ -559,8 +596,11 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
         .xy(pt2(0.0, win.top() - 75.0)); 
     
     /* Draw score */
+    let score_font: Font = Font::from_bytes(model.score_font.clone()).unwrap();
+    
     let score = format!("Score: {}", model.player.score);
     draw.text(&score)
+        .font(score_font)
         .no_line_wrap()
         .font_size(60)
         .xy(pt2(0.0 , win.top() - 150.0));
@@ -590,9 +630,60 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
     let win = app.window_rect();
     let draw = app.draw();
     draw.background().color(BLACK);
+    
+    for asteroid in &model.asteroid{ 
+        draw.polyline()
+            .xy(asteroid.position)
+            .weight(asteroid.thickness)
+            .color(WHITE)
+            .rotate(asteroid.rotation)
+            .points(asteroid.points.clone());
+        
+        let true_rotation = asteroid.rotation + deg_to_rad(90.0 + 180.0);
+        let asteroid_size = asteroid.size / 2.0;
+        
+        if asteroid.position.x + (asteroid.size) >= (win.right()){
+            let new_pos_x = asteroid.position.x - WINDOW_SIZE.0 as f32;
+            draw.polyline()
+                .x_y(new_pos_x, asteroid.position.y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+        else if asteroid.position.x - (asteroid.size) <= (win.left()){
+            let new_pos_x = asteroid.position.x + WINDOW_SIZE.0 as f32;
+            draw.polyline()
+                .x_y(new_pos_x, asteroid.position.y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+        
+        if asteroid.position.y + (asteroid.size) >= (win.top()){
+            let new_pos_y = asteroid.position.y - WINDOW_SIZE.1 as f32;
+            draw.polyline()
+                .x_y(asteroid.position.x, new_pos_y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+        else if asteroid.position.y - (asteroid.size) <= (win.bottom()){
+            let new_pos_y = asteroid.position.y + WINDOW_SIZE.1 as f32;
+            draw.polyline()
+                .x_y(asteroid.position.x, new_pos_y)
+                .weight(asteroid.thickness)
+                .color(WHITE)
+                .rotate(asteroid.rotation)
+                .points(asteroid.points.clone());
+        }
+    }
+
+
 
     let actual_font: Font = Font::from_bytes(model.raw_font.clone()).unwrap();
-
     let title = format!("SPACE CLUTTER");
     draw.text(&title)
         .font(actual_font)
@@ -623,15 +714,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point5,point6,point7)
             .x_y(model.player.position.x, model.player.position.y)
             .rotate(model.player.rotation)
-            .color(RED);
-        let point8 = pt2(-6.0,-10.0);
-        let point9 = pt2(6.0,-10.0);
-        let point10 = pt2(0.0,-30.0);
-        draw.tri()
-            .points(point8,point9,point10)
-            .x_y(model.player.position.x, model.player.position.y)
-            .rotate(model.player.rotation)
-            .color(YELLOW);
+            .color(WHITE);
     }
     let point1 = pt2(-(SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
     let point2 = pt2(0.0, -SPACESHIP_PEAK);

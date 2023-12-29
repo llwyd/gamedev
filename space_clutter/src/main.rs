@@ -1,5 +1,6 @@
 use nannou::prelude::*;
 use nannou::rand;
+use nannou::text::Font;
 
 const WINDOW_SIZE: (u32, u32) = (640, 480);
 const SPACESHIP_PEAK: f32 = 16.25;
@@ -82,6 +83,7 @@ struct Model {
     last_event: WindowEvent,
     state: StateFunc,
     game_state:State,
+    raw_font: Vec<u8>,
 }
 
 fn main() {
@@ -118,6 +120,7 @@ fn model(app: &App) -> Model {
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
         game_state: State::Menu,
+        raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
     };
 
     model
@@ -583,10 +586,13 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().color(BLACK);
 
+    let actual_font: Font = Font::from_bytes(model.raw_font.clone()).unwrap();
+
     let title = format!("SPACE CLUTTER");
     draw.text(&title)
+        .font(actual_font)
         .no_line_wrap()
-        .font_size(75)
+        .font_size(40)
         .xy(pt2(0.0, win.top() - 100.0)); 
     
     let anykey = format!("[ press any key to start ]");

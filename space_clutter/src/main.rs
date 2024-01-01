@@ -1,6 +1,8 @@
 use nannou::prelude::*;
 use nannou::rand;
 use nannou::text::Font;
+use nannou_audio as audio;
+use nannou_audio::Buffer;
 
 const WINDOW_SIZE: (u32, u32) = (640, 480);
 const SPACESHIP_PEAK: f32 = 16.25;
@@ -85,6 +87,11 @@ struct Model {
     game_state:State,
     raw_font: Vec<u8>,
     score_font: Vec<u8>,
+    _stream: audio::Stream<Audio>,
+}
+
+struct Audio{
+    audio: audrey::read::BufFileReader,
 }
 
 fn main() {
@@ -106,6 +113,20 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
     
+    let audio_host = audio::Host::new();
+    let theme = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
+    let audio_data = Audio{ audio: theme };
+
+    let stream = audio_host
+        .new_output_stream(audio_data)
+        .render(audio)
+        .channels(2)
+        .sample_rate(44_100)
+        .build()
+        .unwrap();
+
+    stream.play().unwrap();
+    
     let mut model = Model {
         player: Player {
                 position: pt2(0.0, 0.0),
@@ -123,11 +144,36 @@ fn model(app: &App) -> Model {
         game_state: State::Menu,
         raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
+        _stream: stream,
     };
 
     model
 }
 
+fn reset_audio_loop(audio: &mut Audio){
+    audio.audio = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
+}
+
+fn audio(audio:&mut Audio, buffer: &mut Buffer){
+    
+    let file_frames = audio.audio.frames::<[f32; 2]>().filter_map(Result::ok);
+    let mut frames_written = 0; 
+    let mut frames_available = buffer.len_frames();
+    for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
+        //println!("{:?}, {:?}", frame, file_frame);
+        for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
+            //println!("{:?}, {:?}", sample, file_sample);
+            *sample = file_sample;
+        }
+        frames_written += 1;
+    }
+//    println!("{:?} : {:?}", frames_written, frames_available );
+
+    if frames_written < frames_available{
+        println!("Restart audio loop");
+        reset_audio_loop(audio);
+    }
+} 
 
 fn reset(app: &App, model: &mut Model){
     model.player.position = pt2(0.0, 0.0);

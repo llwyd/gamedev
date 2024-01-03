@@ -87,6 +87,7 @@ struct Model {
     game_state:State,
     raw_font: Vec<u8>,
     score_font: Vec<u8>,
+    credit_font: Vec<u8>,
     _stream: audio::Stream<Audio>,
 }
 
@@ -144,6 +145,7 @@ fn model(app: &App) -> Model {
         game_state: State::Menu,
         raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
+        credit_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         _stream: stream,
     };
 
@@ -651,8 +653,10 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
         .font_size(60)
         .xy(pt2(0.0 , win.top() - 150.0));
     
+    let credit_font: Font = Font::from_bytes(model.credit_font.clone()).unwrap();
     let anykey = format!("press any key to retry");
     draw.text(&anykey)
+        .font(credit_font.clone())
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, win.top() -250.0));
@@ -660,12 +664,14 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
 
     let credits = format!("Coding + Music by T.L. '23");
     draw.text(&credits)
+        .font(credit_font.clone())
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, win.bottom() + 150.0));
     
     let credits = format!("llwyd.io");
     draw.text(&credits)
+        .font(credit_font.clone())
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, win.bottom() + 100.0));
@@ -737,8 +743,10 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
         .font_size(40)
         .xy(pt2(0.0, win.top() - 100.0)); 
     
+    let credit_font: Font = Font::from_bytes(model.credit_font.clone()).unwrap();
     let anykey = format!("[ press any key to start ]");
     draw.text(&anykey)
+        .font(credit_font)
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, -100.0));

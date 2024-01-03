@@ -88,7 +88,7 @@ struct Model {
     raw_font: Vec<u8>,
     score_font: Vec<u8>,
     credit_font: Vec<u8>,
-    _stream: audio::Stream<Audio>,
+    stream: audio::Stream<Audio>,
 }
 
 struct Audio{
@@ -149,7 +149,7 @@ fn model(app: &App) -> Model {
         raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
         credit_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
-        _stream: stream,
+        stream: stream,
     };
 
     model
@@ -168,7 +168,7 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
         //println!("{:?}, {:?}", frame, file_frame);
         for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
             //println!("{:?}, {:?}", sample, file_sample);
-            *sample = file_sample;
+            *sample = file_sample/2.0;
         }
         frames_written += 1;
     }
@@ -177,6 +177,26 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
     if frames_written < frames_available{
         println!("Restart audio loop");
         reset_audio_loop(audio);
+    }
+    let mut event_ended = Vec::new();
+    for (i, event) in audio.event.iter_mut().enumerate(){
+        let file_frames = event.frames::<[f32; 2]>().filter_map(Result::ok);
+        let mut frames_written = 0; 
+        let mut frames_available = buffer.len_frames();
+        for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
+            for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
+                *sample += file_sample /2.0;
+            }
+            frames_written += 1;
+        }
+        if frames_written < frames_available{
+            println!("Pop audio event");
+            event_ended.push(i);
+        }
+    }
+
+    for e in event_ended{
+        audio.event.remove(e);
     }
 } 
 
@@ -256,6 +276,10 @@ fn fire_missile(model: &mut Model)
         rotation: model.player.rotation,
     };
     model.player.missile.push(missile);
+
+    let sound = audrey::open("assets/space_clutter_laser.wav").expect("Not Found");
+
+    model.stream.send( move |audio| {audio.event.push(sound)}).ok();
 }
 
 fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{

@@ -315,7 +315,7 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
     has_hit
 }
 
-fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32, fragment: &mut Vec<Asteroid>) -> bool{
+fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32, fragment: &mut Vec<Asteroid>, stream: &mut audio::Stream<Audio>) -> bool{
     let mut has_hit = false;
 
         for missile in &mut *missiles
@@ -331,6 +331,9 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
                 missile.hit = true;
                 has_hit = true;
                 *score += 1;
+
+                let sound = audrey::open("assets/space_clutter_boom.wav").expect("Not Found");
+                stream.send( move |audio| {audio.event.push(sound)}).ok();
                
                 if !asteroid.fragment{
                     let new_point_l = pt2(asteroid.position.x - (asteroid.size / 2.0), asteroid.position.y);
@@ -610,7 +613,7 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
     
     let mut fragments:Vec<Asteroid> = Vec::new();
     assert_eq!(fragments.len(), 0);
-    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score, &mut fragments));
+    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score, &mut fragments, &mut model.stream));
 
     for asteroid in fragments{
         model.asteroid.push(asteroid);

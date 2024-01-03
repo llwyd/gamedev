@@ -247,15 +247,15 @@ fn idle_event(app: &App, model: &mut Model, event: WindowEvent)
     }
 }
 
-fn fire_missile(player: &mut Player)
+fn fire_missile(model: &mut Model)
 {
     println!("Firing missile");
     let missile = Projectile{
         hit: false,
-        position: player.position,
-        rotation: player.rotation,
+        position: model.player.position,
+        rotation: model.player.rotation,
     };
-    player.missile.push(missile);
+    model.player.missile.push(missile);
 }
 
 fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
@@ -618,7 +618,7 @@ fn state_idle(player: &mut Player, event:StateEvents)
         StateEvents::RightKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
         StateEvents::UpKeyPress => {player.thrust = true},
         StateEvents::UpKeyRelease => {player.thrust = false},
-        StateEvents::SpaceKeyPress => { fire_missile(player) },
+//        StateEvents::SpaceKeyPress => { fire_missile(player) },
         _ => { /* Do nowt */}
     }
 }
@@ -632,7 +632,7 @@ fn handle_event(model: &mut Model, event:StateEvents)
         StateEvents::RightKeyRelease => {model.player.rotation_inc = deg_to_rad(0.0)},
         StateEvents::UpKeyPress => {model.player.thrust = true},
         StateEvents::UpKeyRelease => {model.player.thrust = false},
-        StateEvents::SpaceKeyPress => { fire_missile(&mut model.player) },
+        StateEvents::SpaceKeyPress => { fire_missile(model) },
         _ => { /* Do nowt */}
     }
 }

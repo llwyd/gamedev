@@ -146,7 +146,7 @@ fn model(app: &App) -> Model {
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
         game_state: State::Menu,
-        raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
+        raw_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
         credit_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         stream: stream,

@@ -93,6 +93,7 @@ struct Model {
 
 struct Audio{
     audio: audrey::read::BufFileReader,
+    event: Vec<audrey::read::BufFileReader>,
 }
 
 fn main() {
@@ -116,7 +117,9 @@ fn model(app: &App) -> Model {
     
     let audio_host = audio::Host::new();
     let theme = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
-    let audio_data = Audio{ audio: theme };
+    let audio_data = Audio{ 
+        audio: theme,
+        event: Vec::new()};
 
     let stream = audio_host
         .new_output_stream(audio_data)
@@ -236,8 +239,8 @@ fn idle_event(app: &App, model: &mut Model, event: WindowEvent)
     if model.last_event != event
     {
         match event {
-            KeyPressed(key) => { println!("Key Pressed"); (model.state)(&mut model.player,keypress_to_state(key)) }
-            KeyReleased(key) => { println!("Key Released");(model.state)(&mut model.player,keyrelease_to_state(key)) }
+            KeyPressed(key) => { println!("Key Pressed"); handle_event(model, keypress_to_state(key)) }
+            KeyReleased(key) => { println!("Key Released");handle_event(model, keyrelease_to_state(key)) }
             _ => {}
         }
         model.last_event = event;
@@ -616,6 +619,20 @@ fn state_idle(player: &mut Player, event:StateEvents)
         StateEvents::UpKeyPress => {player.thrust = true},
         StateEvents::UpKeyRelease => {player.thrust = false},
         StateEvents::SpaceKeyPress => { fire_missile(player) },
+        _ => { /* Do nowt */}
+    }
+}
+
+fn handle_event(model: &mut Model, event:StateEvents)
+{
+    match event{
+        StateEvents::LeftKeyPress =>{model.player.rotation_inc = deg_to_rad(ANGLE_INC)},
+        StateEvents::LeftKeyRelease => {model.player.rotation_inc = deg_to_rad(0.0)},
+        StateEvents::RightKeyPress => {model.player.rotation_inc = deg_to_rad(-ANGLE_INC)},
+        StateEvents::RightKeyRelease => {model.player.rotation_inc = deg_to_rad(0.0)},
+        StateEvents::UpKeyPress => {model.player.thrust = true},
+        StateEvents::UpKeyRelease => {model.player.thrust = false},
+        StateEvents::SpaceKeyPress => { fire_missile(&mut model.player) },
         _ => { /* Do nowt */}
     }
 }

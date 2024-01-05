@@ -102,7 +102,7 @@ struct Audio{
 
 struct Difficulty{
     max_asteroids:u32,
-    max_asteroid_speed:f32,
+    asteroid_speed:f32,
     tick: Instant,
     duration: Duration,
 }
@@ -163,7 +163,7 @@ fn model(app: &App) -> Model {
         stream: stream,
         difficulty:Difficulty{
             max_asteroids: MAX_ASTEROIDS,
-            max_asteroid_speed: ASTEROID_MAX_SPEED,
+            asteroid_speed: ASTEROID_SPEED,
             tick: Instant::now(),
             duration: Duration::new(5, 0),
         },
@@ -188,7 +188,7 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
         for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
             //println!("{:?}, {:?}", sample, file_sample);
             
-            //*sample = file_sample/2.0;
+            *sample = file_sample/2.0;
         }
         frames_written += 1;
     }
@@ -205,7 +205,7 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
         let mut frames_available = buffer.len_frames();
         for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
             for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
-              //  *sample += file_sample /2.0;
+                *sample += file_sample /2.0;
             }
             frames_written += 1;
         }
@@ -235,7 +235,7 @@ fn reset(app: &App, model: &mut Model){
     model.game_state = State::Idle;
 
     model.difficulty.max_asteroids = MAX_ASTEROIDS;
-    model.difficulty.max_asteroid_speed = ASTEROID_MAX_SPEED;
+    model.difficulty.asteroid_speed = ASTEROID_SPEED;
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -562,7 +562,7 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
     }
     
     let current_time:Instant = Instant::now();
-    let duration = Duration::from_secs(1);
+    let duration = Duration::new(0, 500000000);
 
     if current_time.duration_since(model.tick) > duration {
         model.display_text ^= true;
@@ -577,7 +577,7 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
     if current_tick.duration_since(model.difficulty.tick) > model.difficulty.duration{
         model.difficulty.tick = Instant::now();
         model.difficulty.max_asteroids += 1;
-        model.difficulty.max_asteroid_speed += 1.0;
+        model.difficulty.asteroid_speed += 0.25;
         println!("Difficulty Increase!");
     }
 
@@ -646,8 +646,8 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
         }
         
         asteroid.rotation += asteroid.rotation_speed;
-        asteroid.position.x += -ASTEROID_SPEED * asteroid.thrust_rotation.sin();
-        asteroid.position.y += ASTEROID_SPEED * asteroid.thrust_rotation.cos();
+        asteroid.position.x += -model.difficulty.asteroid_speed * asteroid.thrust_rotation.sin();
+        asteroid.position.y += model.difficulty.asteroid_speed * asteroid.thrust_rotation.cos();
     }
     
     let mut fragments:Vec<Asteroid> = Vec::new();

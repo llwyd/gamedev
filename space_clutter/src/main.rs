@@ -90,6 +90,7 @@ struct Model {
     score_font: Vec<u8>,
     credit_font: Vec<u8>,
     stream: audio::Stream<Audio>,
+    difficulty: Difficulty,
     tick: Instant,
     display_text: bool,
 }
@@ -97,6 +98,13 @@ struct Model {
 struct Audio{
     audio: audrey::read::BufFileReader,
     event: Vec<audrey::read::BufFileReader>,
+}
+
+struct Difficulty{
+    max_asteroids:u32,
+    max_asteroid_speed:f32,
+    tick: Instant,
+    duration: Duration,
 }
 
 fn main() {
@@ -153,6 +161,12 @@ fn model(app: &App) -> Model {
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
         credit_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         stream: stream,
+        difficulty:Difficulty{
+            max_asteroids: MAX_ASTEROIDS,
+            max_asteroid_speed: ASTEROID_MAX_SPEED,
+            tick: Instant::now(),
+            duration: Duration::new(5, 0),
+        },
         tick: Instant::now(),
         display_text: true,
     };
@@ -219,6 +233,9 @@ fn reset(app: &App, model: &mut Model){
     model.asteroid = Vec::new();
     model.last_event = KeyReleased(Key::Escape);
     model.game_state = State::Idle;
+
+    model.difficulty.max_asteroids = MAX_ASTEROIDS;
+    model.difficulty.max_asteroid_speed = ASTEROID_MAX_SPEED;
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -536,7 +553,7 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
     }
     
     /* Generate new asteroid if needed */
-    if model.asteroid.len() < MAX_ASTEROIDS as usize
+    if model.asteroid.len() < model.difficulty.max_asteroids as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
         let asteroid = generate_asteroid(new_pt, 12, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
@@ -555,6 +572,14 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
 
 fn idle_update(app: &App, model: &mut Model, update: Update) {
     let win = app.window_rect();
+    let current_tick:Instant = Instant::now();
+
+    if current_tick.duration_since(model.difficulty.tick) > model.difficulty.duration{
+        model.difficulty.tick = Instant::now();
+        model.difficulty.max_asteroids += 1;
+        model.difficulty.max_asteroid_speed += 1.0;
+        println!("Difficulty Increase!");
+    }
 
     /* First, has the model crashed into anything? */
     let crashed = has_ship_hit_asteroid(&model.player, &model.asteroid);
@@ -641,7 +666,7 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
     }
 
     /* Generate new asteroid if needed */
-    if model.asteroid.len() < MAX_ASTEROIDS as usize
+    if model.asteroid.len() < model.difficulty.max_asteroids as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
         let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);

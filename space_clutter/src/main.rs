@@ -3,6 +3,7 @@ use nannou::rand;
 use nannou::text::Font;
 use nannou_audio as audio;
 use nannou_audio::Buffer;
+use std::time::{Duration, Instant};
 
 const WINDOW_SIZE: (u32, u32) = (640, 480);
 const SPACESHIP_PEAK: f32 = 16.25;
@@ -89,6 +90,8 @@ struct Model {
     score_font: Vec<u8>,
     credit_font: Vec<u8>,
     stream: audio::Stream<Audio>,
+    tick: Instant,
+    display_text: bool,
 }
 
 struct Audio{
@@ -150,6 +153,8 @@ fn model(app: &App) -> Model {
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
         credit_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         stream: stream,
+        tick: Instant::now(),
+        display_text: true,
     };
 
     model
@@ -168,7 +173,8 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
         //println!("{:?}, {:?}", frame, file_frame);
         for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
             //println!("{:?}, {:?}", sample, file_sample);
-            *sample = file_sample/2.0;
+            
+            //*sample = file_sample/2.0;
         }
         frames_written += 1;
     }
@@ -185,7 +191,7 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
         let mut frames_available = buffer.len_frames();
         for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
             for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
-                *sample += file_sample /2.0;
+              //  *sample += file_sample /2.0;
             }
             frames_written += 1;
         }
@@ -533,9 +539,17 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
     if model.asteroid.len() < MAX_ASTEROIDS as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
-        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
+        let asteroid = generate_asteroid(new_pt, 12, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
 
         model.asteroid.push(asteroid);
+    }
+    
+    let current_time:Instant = Instant::now();
+    let duration = Duration::from_secs(1);
+
+    if current_time.duration_since(model.tick) > duration {
+        model.display_text ^= true;
+        model.tick = Instant::now();
     }
 }
 
@@ -785,16 +799,17 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
         .font(actual_font)
         .no_line_wrap()
         .font_size(40)
-        .xy(pt2(0.0, win.top() - 100.0)); 
-    
-    let credit_font: Font = Font::from_bytes(model.credit_font.clone()).unwrap();
-    let anykey = format!("[ press any key to start ]");
-    draw.text(&anykey)
-        .font(credit_font)
-        .no_line_wrap()
-        .font_size(20)
-        .xy(pt2(0.0, -100.0));
+        .xy(pt2(0.0, win.top() - 100.0));    
 
+    if model.display_text{
+        let credit_font: Font = Font::from_bytes(model.credit_font.clone()).unwrap();
+        let anykey = format!("[ press any key to start ]");
+        draw.text(&anykey)
+            .font(credit_font)
+            .no_line_wrap()
+            .font_size(20)
+            .xy(pt2(0.0, -100.0));
+    }
     draw.to_frame(app, &frame).unwrap();
 }
 

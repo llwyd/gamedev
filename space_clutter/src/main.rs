@@ -18,7 +18,7 @@ const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
-const MAX_ASTEROIDS: u32 = 5;
+const MAX_ASTEROIDS: u32 = 15;
 const ASTEROID_MAX_SIZE: f32 = 80.0;
 const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 4.0;
@@ -438,18 +438,19 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
             new_x = random_range((WINDOW_SIZE.0 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.0 as f32 / 2.0) - ASTEROID_MAX_SIZE);
             new_y = random_range((WINDOW_SIZE.1 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.1 as f32 / 2.0) - ASTEROID_MAX_SIZE);
         
-            let left_edge:bool = new_x < player.position.x - ASTEROID_MAX_SIZE;
-            let right_edge:bool = new_x > player.position.x + ASTEROID_MAX_SIZE;
-            let top_edge:bool = new_y > player.position.y + ASTEROID_MAX_SIZE;
-            let bottom_edge:bool = new_y < player.position.y - ASTEROID_MAX_SIZE;
+            let left_edge:bool = new_x < player.position.x - SPACESHIP_WIDTH;
+            let right_edge:bool = new_x > player.position.x + SPACESHIP_WIDTH;
+            let top_edge:bool = new_y > player.position.y + SPACESHIP_HEIGHT;
+            let bottom_edge:bool = new_y < player.position.y - SPACESHIP_HEIGHT;
             if left_edge || right_edge
             {
                 if top_edge || bottom_edge {
                     valid_spaceship_pos = true;
+                    valid_position = true;
                 }
             }
         }
-
+    /*
         if asteroids.len() < 1{
             valid_position = true;
         }
@@ -467,6 +468,7 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
                 }
             }
         }
+    */
     }
 
     pt2(new_x, new_y)
@@ -825,7 +827,7 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
     draw.text(&title)
         .font(actual_font)
         .no_line_wrap()
-        .font_size(40)
+        .font_size(60)
         .xy(pt2(0.0, win.top() - 100.0));    
 
     if model.display_text{

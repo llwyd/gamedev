@@ -69,7 +69,8 @@ struct Asteroid{
     fragment: bool, // Whether it is a fragment or not
     thickness: f32,
     thrust_rotation: f32,
-    points: Vec<Point2>
+    points: Vec<Point2>,
+    speed: f32,
 }
 
 struct Projectile{
@@ -360,10 +361,10 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
                
                 if !asteroid.fragment{
                     let new_point_l = pt2(asteroid.position.x - (asteroid.size / 2.0), asteroid.position.y);
-                    let asteroid_l = generate_asteroid(new_point_l, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, true);
+                    let asteroid_l = generate_asteroid(new_point_l, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, ASTEROID_SPEED, true);
                     
                     let new_point_r = pt2(asteroid.position.x + (asteroid.size / 2.0), asteroid.position.y);
-                    let asteroid_r = generate_asteroid(new_point_r, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, true);
+                    let asteroid_r = generate_asteroid(new_point_r, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, ASTEROID_SPEED, true);
 
                     fragment.push(asteroid_l);
                     fragment.push(asteroid_r); 
@@ -471,7 +472,7 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
     pt2(new_x, new_y)
 }
 
-fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size: f32, fragment: bool) -> Asteroid{
+fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size: f32, speed: f32, fragment: bool) -> Asteroid{
     let new_size = random_range(min_size, max_size);
     
     let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
@@ -490,7 +491,8 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
         num_points: num_points,
         thickness: thickness,
         thrust_rotation: rotation,
-        fragment: fragment
+        fragment: fragment,
+        speed: speed,
     };
     let angle_inc:f32 = (360 / asteroid.num_points) as f32;
     for i in 0..asteroid.num_points{
@@ -556,7 +558,7 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
     if model.asteroid.len() < model.difficulty.max_asteroids as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
-        let asteroid = generate_asteroid(new_pt, 12, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
+        let asteroid = generate_asteroid(new_pt, 12, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, model.difficulty.asteroid_speed, false);
 
         model.asteroid.push(asteroid);
     }
@@ -646,8 +648,8 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
         }
         
         asteroid.rotation += asteroid.rotation_speed;
-        asteroid.position.x += -model.difficulty.asteroid_speed * asteroid.thrust_rotation.sin();
-        asteroid.position.y += model.difficulty.asteroid_speed * asteroid.thrust_rotation.cos();
+        asteroid.position.x += -asteroid.speed * asteroid.thrust_rotation.sin();
+        asteroid.position.y += asteroid.speed * asteroid.thrust_rotation.cos();
     }
     
     let mut fragments:Vec<Asteroid> = Vec::new();
@@ -669,7 +671,7 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
     if model.asteroid.len() < model.difficulty.max_asteroids as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
-        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
+        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, model.difficulty.asteroid_speed, false);
 
         model.asteroid.push(asteroid);
     }

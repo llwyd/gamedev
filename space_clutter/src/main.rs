@@ -450,25 +450,6 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
                 }
             }
         }
-    /*
-        if asteroids.len() < 1{
-            valid_position = true;
-        }
-        else
-        {
-            valid_position = true;
-            for asteroid in asteroids{
-                let left_edge:bool = new_x > asteroid.position.x - ASTEROID_WIGGLE;
-                let right_edge:bool = new_x < asteroid.position.x + ASTEROID_WIGGLE;
-                let top_edge:bool = new_y < asteroid.position.y + ASTEROID_WIGGLE;
-                let bottom_edge:bool = new_y > asteroid.position.y - ASTEROID_WIGGLE;
-                if left_edge && right_edge && top_edge && bottom_edge{
-                    valid_position = false;
-                    break;
-                }
-            }
-        }
-    */
     }
 
     pt2(new_x, new_y)

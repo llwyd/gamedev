@@ -1,6 +1,9 @@
 use nannou::prelude::*;
 use nannou::rand;
 use nannou::text::Font;
+use nannou_audio as audio;
+use nannou_audio::Buffer;
+use std::time::{Duration, Instant};
 
 const WINDOW_SIZE: (u32, u32) = (640, 480);
 const SPACESHIP_PEAK: f32 = 16.25;
@@ -15,7 +18,7 @@ const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
-const MAX_ASTEROIDS: u32 = 5;
+const MAX_ASTEROIDS: u32 = 15;
 const ASTEROID_MAX_SIZE: f32 = 80.0;
 const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 4.0;
@@ -66,7 +69,8 @@ struct Asteroid{
     fragment: bool, // Whether it is a fragment or not
     thickness: f32,
     thrust_rotation: f32,
-    points: Vec<Point2>
+    points: Vec<Point2>,
+    speed: f32,
 }
 
 struct Projectile{
@@ -85,6 +89,23 @@ struct Model {
     game_state:State,
     raw_font: Vec<u8>,
     score_font: Vec<u8>,
+    credit_font: Vec<u8>,
+    stream: audio::Stream<Audio>,
+    difficulty: Difficulty,
+    tick: Instant,
+    display_text: bool,
+}
+
+struct Audio{
+    audio: audrey::read::BufFileReader,
+    event: Vec<audrey::read::BufFileReader>,
+}
+
+struct Difficulty{
+    max_asteroids:u32,
+    asteroid_speed:f32,
+    tick: Instant,
+    duration: Duration,
 }
 
 fn main() {
@@ -106,6 +127,22 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
     
+    let audio_host = audio::Host::new();
+    let theme = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
+    let audio_data = Audio{ 
+        audio: theme,
+        event: Vec::new()};
+
+    let stream = audio_host
+        .new_output_stream(audio_data)
+        .render(audio)
+        .channels(2)
+        .sample_rate(44_100)
+        .build()
+        .unwrap();
+
+    stream.play().unwrap();
+    
     let mut model = Model {
         player: Player {
                 position: pt2(0.0, 0.0),
@@ -121,13 +158,68 @@ fn model(app: &App) -> Model {
         last_event: KeyReleased(Key::Escape),
         state: state_idle,
         game_state: State::Menu,
-        raw_font: include_bytes!("../assets/Kenney Space.ttf").to_vec(),
+        raw_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
+        credit_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
+        stream: stream,
+        difficulty:Difficulty{
+            max_asteroids: MAX_ASTEROIDS,
+            asteroid_speed: ASTEROID_SPEED,
+            tick: Instant::now(),
+            duration: Duration::new(5, 0),
+        },
+        tick: Instant::now(),
+        display_text: true,
     };
 
     model
 }
 
+fn reset_audio_loop(audio: &mut Audio){
+    audio.audio = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
+}
+
+fn audio(audio:&mut Audio, buffer: &mut Buffer){
+    
+    let file_frames = audio.audio.frames::<[f32; 2]>().filter_map(Result::ok);
+    let mut frames_written = 0; 
+    let mut frames_available = buffer.len_frames();
+    for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
+        //println!("{:?}, {:?}", frame, file_frame);
+        for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
+            //println!("{:?}, {:?}", sample, file_sample);
+            
+            *sample = file_sample/2.0;
+        }
+        frames_written += 1;
+    }
+//    println!("{:?} : {:?}", frames_written, frames_available );
+
+    if frames_written < frames_available{
+        println!("Restart audio loop");
+        reset_audio_loop(audio);
+    }
+    let mut event_ended = Vec::new();
+    for (i, event) in audio.event.iter_mut().enumerate(){
+        let file_frames = event.frames::<[f32; 2]>().filter_map(Result::ok);
+        let mut frames_written = 0; 
+        let mut frames_available = buffer.len_frames();
+        for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
+            for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
+                *sample += file_sample /2.0;
+            }
+            frames_written += 1;
+        }
+        if frames_written < frames_available{
+            println!("Pop audio event");
+            event_ended.push(i);
+        }
+    }
+
+    for e in event_ended{
+        audio.event.remove(e);
+    }
+} 
 
 fn reset(app: &App, model: &mut Model){
     model.player.position = pt2(0.0, 0.0);
@@ -142,6 +234,9 @@ fn reset(app: &App, model: &mut Model){
     model.asteroid = Vec::new();
     model.last_event = KeyReleased(Key::Escape);
     model.game_state = State::Idle;
+
+    model.difficulty.max_asteroids = MAX_ASTEROIDS;
+    model.difficulty.asteroid_speed = ASTEROID_SPEED;
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -188,23 +283,27 @@ fn idle_event(app: &App, model: &mut Model, event: WindowEvent)
     if model.last_event != event
     {
         match event {
-            KeyPressed(key) => { println!("Key Pressed"); (model.state)(&mut model.player,keypress_to_state(key)) }
-            KeyReleased(key) => { println!("Key Released");(model.state)(&mut model.player,keyrelease_to_state(key)) }
+            KeyPressed(key) => { println!("Key Pressed"); handle_event(model, keypress_to_state(key)) }
+            KeyReleased(key) => { println!("Key Released");handle_event(model, keyrelease_to_state(key)) }
             _ => {}
         }
         model.last_event = event;
     }
 }
 
-fn fire_missile(player: &mut Player)
+fn fire_missile(model: &mut Model)
 {
     println!("Firing missile");
     let missile = Projectile{
         hit: false,
-        position: player.position,
-        rotation: player.rotation,
+        position: model.player.position,
+        rotation: model.player.rotation,
     };
-    player.missile.push(missile);
+    model.player.missile.push(missile);
+
+    let sound = audrey::open("assets/space_clutter_laser.wav").expect("Not Found");
+
+    model.stream.send( move |audio| {audio.event.push(sound)}).ok();
 }
 
 fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
@@ -240,7 +339,7 @@ fn has_missile_hit_edge(missile: &Projectile, win: Rect) -> bool{
     has_hit
 }
 
-fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32, fragment: &mut Vec<Asteroid>) -> bool{
+fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid, score: &mut u32, fragment: &mut Vec<Asteroid>, stream: &mut audio::Stream<Audio>) -> bool{
     let mut has_hit = false;
 
         for missile in &mut *missiles
@@ -256,13 +355,16 @@ fn has_missile_hit_asteroid(missiles: &mut Vec<Projectile>, asteroid: &Asteroid,
                 missile.hit = true;
                 has_hit = true;
                 *score += 1;
+
+                let sound = audrey::open("assets/space_clutter_boom.wav").expect("Not Found");
+                stream.send( move |audio| {audio.event.push(sound)}).ok();
                
                 if !asteroid.fragment{
                     let new_point_l = pt2(asteroid.position.x - (asteroid.size / 2.0), asteroid.position.y);
-                    let asteroid_l = generate_asteroid(new_point_l, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, true);
+                    let asteroid_l = generate_asteroid(new_point_l, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, ASTEROID_SPEED, true);
                     
                     let new_point_r = pt2(asteroid.position.x + (asteroid.size / 2.0), asteroid.position.y);
-                    let asteroid_r = generate_asteroid(new_point_r, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, true);
+                    let asteroid_r = generate_asteroid(new_point_r, 12, ASTEROID_MIN_SIZE / 2.0, ASTEROID_MAX_SIZE / 2.0, ASTEROID_SPEED, true);
 
                     fragment.push(asteroid_l);
                     fragment.push(asteroid_r); 
@@ -336,32 +438,15 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
             new_x = random_range((WINDOW_SIZE.0 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.0 as f32 / 2.0) - ASTEROID_MAX_SIZE);
             new_y = random_range((WINDOW_SIZE.1 as f32 / -2.0) + ASTEROID_MAX_SIZE, (WINDOW_SIZE.1 as f32 / 2.0) - ASTEROID_MAX_SIZE);
         
-            let left_edge:bool = new_x < player.position.x - ASTEROID_MAX_SIZE;
-            let right_edge:bool = new_x > player.position.x + ASTEROID_MAX_SIZE;
-            let top_edge:bool = new_y > player.position.y + ASTEROID_MAX_SIZE;
-            let bottom_edge:bool = new_y < player.position.y - ASTEROID_MAX_SIZE;
+            let left_edge:bool = new_x < player.position.x - SPACESHIP_WIDTH;
+            let right_edge:bool = new_x > player.position.x + SPACESHIP_WIDTH;
+            let top_edge:bool = new_y > player.position.y + SPACESHIP_HEIGHT;
+            let bottom_edge:bool = new_y < player.position.y - SPACESHIP_HEIGHT;
             if left_edge || right_edge
             {
                 if top_edge || bottom_edge {
                     valid_spaceship_pos = true;
-                }
-            }
-        }
-
-        if asteroids.len() < 1{
-            valid_position = true;
-        }
-        else
-        {
-            valid_position = true;
-            for asteroid in asteroids{
-                let left_edge:bool = new_x > asteroid.position.x - ASTEROID_WIGGLE;
-                let right_edge:bool = new_x < asteroid.position.x + ASTEROID_WIGGLE;
-                let top_edge:bool = new_y < asteroid.position.y + ASTEROID_WIGGLE;
-                let bottom_edge:bool = new_y > asteroid.position.y - ASTEROID_WIGGLE;
-                if left_edge && right_edge && top_edge && bottom_edge{
-                    valid_position = false;
-                    break;
+                    valid_position = true;
                 }
             }
         }
@@ -370,7 +455,7 @@ fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
     pt2(new_x, new_y)
 }
 
-fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size: f32, fragment: bool) -> Asteroid{
+fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size: f32, speed: f32, fragment: bool) -> Asteroid{
     let new_size = random_range(min_size, max_size);
     
     let new_speed = random_range(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED);
@@ -389,7 +474,8 @@ fn generate_asteroid(position: Point2, num_points: u32, min_size: f32, max_size:
         num_points: num_points,
         thickness: thickness,
         thrust_rotation: rotation,
-        fragment: fragment
+        fragment: fragment,
+        speed: speed,
     };
     let angle_inc:f32 = (360 / asteroid.num_points) as f32;
     for i in 0..asteroid.num_points{
@@ -452,17 +538,33 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
     }
     
     /* Generate new asteroid if needed */
-    if model.asteroid.len() < MAX_ASTEROIDS as usize
+    if model.asteroid.len() < model.difficulty.max_asteroids as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
-        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
+        let asteroid = generate_asteroid(new_pt, 12, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, model.difficulty.asteroid_speed, false);
 
         model.asteroid.push(asteroid);
+    }
+    
+    let current_time:Instant = Instant::now();
+    let duration = Duration::new(0, 500000000);
+
+    if current_time.duration_since(model.tick) > duration {
+        model.display_text ^= true;
+        model.tick = Instant::now();
     }
 }
 
 fn idle_update(app: &App, model: &mut Model, update: Update) {
     let win = app.window_rect();
+    let current_tick:Instant = Instant::now();
+
+    if current_tick.duration_since(model.difficulty.tick) > model.difficulty.duration{
+        model.difficulty.tick = Instant::now();
+        model.difficulty.max_asteroids += 1;
+        model.difficulty.asteroid_speed += 0.25;
+        println!("Difficulty Increase!");
+    }
 
     /* First, has the model crashed into anything? */
     let crashed = has_ship_hit_asteroid(&model.player, &model.asteroid);
@@ -529,13 +631,13 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
         }
         
         asteroid.rotation += asteroid.rotation_speed;
-        asteroid.position.x += -ASTEROID_SPEED * asteroid.thrust_rotation.sin();
-        asteroid.position.y += ASTEROID_SPEED * asteroid.thrust_rotation.cos();
+        asteroid.position.x += -asteroid.speed * asteroid.thrust_rotation.sin();
+        asteroid.position.y += asteroid.speed * asteroid.thrust_rotation.cos();
     }
     
     let mut fragments:Vec<Asteroid> = Vec::new();
     assert_eq!(fragments.len(), 0);
-    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score, &mut fragments));
+    model.asteroid.retain(|asteroids| !has_missile_hit_asteroid(&mut model.player.missile, asteroids, &mut model.player.score, &mut fragments, &mut model.stream));
 
     for asteroid in fragments{
         model.asteroid.push(asteroid);
@@ -549,10 +651,10 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
     }
 
     /* Generate new asteroid if needed */
-    if model.asteroid.len() < MAX_ASTEROIDS as usize
+    if model.asteroid.len() < model.difficulty.max_asteroids as usize
     {
         let new_pt =  new_point(&model.player, &model.asteroid);
-        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, false);
+        let asteroid = generate_asteroid(new_pt, 8, ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE, model.difficulty.asteroid_speed, false);
 
         model.asteroid.push(asteroid);
     }
@@ -567,7 +669,21 @@ fn state_idle(player: &mut Player, event:StateEvents)
         StateEvents::RightKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
         StateEvents::UpKeyPress => {player.thrust = true},
         StateEvents::UpKeyRelease => {player.thrust = false},
-        StateEvents::SpaceKeyPress => { fire_missile(player) },
+//        StateEvents::SpaceKeyPress => { fire_missile(player) },
+        _ => { /* Do nowt */}
+    }
+}
+
+fn handle_event(model: &mut Model, event:StateEvents)
+{
+    match event{
+        StateEvents::LeftKeyPress =>{model.player.rotation_inc = deg_to_rad(ANGLE_INC)},
+        StateEvents::LeftKeyRelease => {model.player.rotation_inc = deg_to_rad(0.0)},
+        StateEvents::RightKeyPress => {model.player.rotation_inc = deg_to_rad(-ANGLE_INC)},
+        StateEvents::RightKeyRelease => {model.player.rotation_inc = deg_to_rad(0.0)},
+        StateEvents::UpKeyPress => {model.player.thrust = true},
+        StateEvents::UpKeyRelease => {model.player.thrust = false},
+        StateEvents::SpaceKeyPress => { fire_missile(model) },
         _ => { /* Do nowt */}
     }
 }
@@ -605,8 +721,10 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
         .font_size(60)
         .xy(pt2(0.0 , win.top() - 150.0));
     
+    let credit_font: Font = Font::from_bytes(model.credit_font.clone()).unwrap();
     let anykey = format!("press any key to retry");
     draw.text(&anykey)
+        .font(credit_font.clone())
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, win.top() -250.0));
@@ -614,12 +732,14 @@ fn gameover_view(app: &App, model: &Model, frame: Frame){
 
     let credits = format!("Coding + Music by T.L. '23");
     draw.text(&credits)
+        .font(credit_font.clone())
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, win.bottom() + 150.0));
     
     let credits = format!("llwyd.io");
     draw.text(&credits)
+        .font(credit_font.clone())
         .no_line_wrap()
         .font_size(20)
         .xy(pt2(0.0, win.bottom() + 100.0));
@@ -688,15 +808,18 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
     draw.text(&title)
         .font(actual_font)
         .no_line_wrap()
-        .font_size(40)
-        .xy(pt2(0.0, win.top() - 100.0)); 
-    
-    let anykey = format!("[ press any key to start ]");
-    draw.text(&anykey)
-        .no_line_wrap()
-        .font_size(20)
-        .xy(pt2(0.0, -100.0));
+        .font_size(60)
+        .xy(pt2(0.0, win.top() - 100.0));    
 
+    if model.display_text{
+        let credit_font: Font = Font::from_bytes(model.credit_font.clone()).unwrap();
+        let anykey = format!("[ press any key to start ]");
+        draw.text(&anykey)
+            .font(credit_font)
+            .no_line_wrap()
+            .font_size(20)
+            .xy(pt2(0.0, -100.0));
+    }
     draw.to_frame(app, &frame).unwrap();
 }
 

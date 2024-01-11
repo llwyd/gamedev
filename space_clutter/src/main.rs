@@ -99,6 +99,7 @@ struct Model {
 struct Audio{
     audio: audrey::read::BufFileReader,
     event: Vec<audrey::read::BufFileReader>,
+    game_state:State,
 }
 
 struct Difficulty{
@@ -130,6 +131,7 @@ fn model(app: &App) -> Model {
     let audio_host = audio::Host::new();
     let theme = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
     let audio_data = Audio{ 
+        game_state: State::Menu,
         audio: theme,
         event: Vec::new()};
 
@@ -176,7 +178,11 @@ fn model(app: &App) -> Model {
 }
 
 fn reset_audio_loop(audio: &mut Audio){
-    audio.audio = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
+    
+    match audio.game_state{
+        State::Idle => audio.audio = audrey::open("assets/space_battle3.wav").expect("Not Found"),
+        _ => audio.audio = audrey::open("assets/space_clutter_theme.wav").expect("Not Found"),
+    }
 }
 
 fn audio(audio:&mut Audio, buffer: &mut Buffer){
@@ -237,6 +243,9 @@ fn reset(app: &App, model: &mut Model){
 
     model.difficulty.max_asteroids = MAX_ASTEROIDS;
     model.difficulty.asteroid_speed = ASTEROID_SPEED;
+    
+    model.stream.send( move |audio| {audio.game_state=State::Idle}).ok();
+    model.stream.send( move |audio| {audio.audio=audrey::open("assets/space_battle3.wav").expect("Not Found")}).ok();
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }

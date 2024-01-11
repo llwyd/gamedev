@@ -18,7 +18,7 @@ const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
-const MAX_ASTEROIDS: u32 = 15;
+const MAX_ASTEROIDS: u32 = 10;
 const ASTEROID_MAX_SIZE: f32 = 80.0;
 const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 4.0;
@@ -99,6 +99,7 @@ struct Model {
 struct Audio{
     audio: audrey::read::BufFileReader,
     event: Vec<audrey::read::BufFileReader>,
+    game_state:State,
 }
 
 struct Difficulty{
@@ -130,6 +131,7 @@ fn model(app: &App) -> Model {
     let audio_host = audio::Host::new();
     let theme = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
     let audio_data = Audio{ 
+        game_state: State::Menu,
         audio: theme,
         event: Vec::new()};
 
@@ -176,7 +178,11 @@ fn model(app: &App) -> Model {
 }
 
 fn reset_audio_loop(audio: &mut Audio){
-    audio.audio = audrey::open("assets/space_clutter_theme.wav").expect("Not Found");
+    
+    match audio.game_state{
+        State::Idle => audio.audio = audrey::open("assets/space_battle3.wav").expect("Not Found"),
+        _ => audio.audio = audrey::open("assets/space_clutter_theme.wav").expect("Not Found"),
+    }
 }
 
 fn audio(audio:&mut Audio, buffer: &mut Buffer){
@@ -237,6 +243,9 @@ fn reset(app: &App, model: &mut Model){
 
     model.difficulty.max_asteroids = MAX_ASTEROIDS;
     model.difficulty.asteroid_speed = ASTEROID_SPEED;
+    
+    model.stream.send( move |audio| {audio.game_state=State::Idle}).ok();
+    model.stream.send( move |audio| {audio.audio=audrey::open("assets/space_battle3.wav").expect("Not Found")}).ok();
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) { }
@@ -857,7 +866,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(new_pos_x, model.player.position.y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
     else if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) < (win.left()){
         let new_pos_x = model.player.position.x + WINDOW_SIZE.0 as f32;
@@ -865,7 +874,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(new_pos_x, model.player.position.y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
     
     if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) > (win.top()){
@@ -874,7 +883,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(model.player.position.x, new_pos_y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
     else if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) < (win.bottom()){
         let new_pos_y = model.player.position.y + WINDOW_SIZE.1 as f32;
@@ -882,7 +891,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(model.player.position.x, new_pos_y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
 
     for missile in &model.player.missile{

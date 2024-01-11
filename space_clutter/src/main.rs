@@ -18,7 +18,7 @@ const MISSILE_SIZE: f32 = 4.0;
 
 /* Can have more than this, for example when a big asteroid explodes into little ones
  * however, this is used to prevent the game generating more */
-const MAX_ASTEROIDS: u32 = 15;
+const MAX_ASTEROIDS: u32 = 10;
 const ASTEROID_MAX_SIZE: f32 = 80.0;
 const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 4.0;
@@ -866,7 +866,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(new_pos_x, model.player.position.y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
     else if model.player.position.x + (SPACESHIP_PEAK * true_rotation.cos()) < (win.left()){
         let new_pos_x = model.player.position.x + WINDOW_SIZE.0 as f32;
@@ -874,7 +874,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(new_pos_x, model.player.position.y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
     
     if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) > (win.top()){
@@ -883,7 +883,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(model.player.position.x, new_pos_y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
     else if model.player.position.y + (SPACESHIP_PEAK * true_rotation.sin()) < (win.bottom()){
         let new_pos_y = model.player.position.y + WINDOW_SIZE.1 as f32;
@@ -891,7 +891,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .points(point1,point2,point3,point4)
             .x_y(model.player.position.x, new_pos_y)
             .rotate(model.player.rotation)
-            .color(GREEN);
+            .color(WHITE);
     }
 
     for missile in &model.player.missile{

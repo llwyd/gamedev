@@ -1,5 +1,4 @@
 use nannou::prelude::*;
-use nannou::rand;
 use nannou::text::Font;
 use nannou_audio as audio;
 use nannou_audio::Buffer;
@@ -12,7 +11,6 @@ const SPACESHIP_WIDTH: f32 = 30.0;
 const SPACESHIP_HEIGHT: f32 = 39.0;
 const SPACESHIP_SPEED: f32 = 3.0;
 const ANGLE_INC: f32 = 3.6;
-const MAX_PROJECTILES: u32 = 20;
 const MISSILE_SPEED: f32 = 8.0;
 const MISSILE_SIZE: f32 = 4.0;
 
@@ -24,7 +22,6 @@ const ASTEROID_MIN_SIZE: f32 = 40.0;
 const ASTEROID_MAX_SPEED: f32 = 4.0;
 const ASTEROID_MIN_SPEED: f32 = -4.0;
 const ASTEROID_THICKNESS: f32 = 5.0;
-const ASTEROID_WIGGLE: f32 = ASTEROID_MAX_SIZE + 20.0;
 const ASTEROID_SPEED: f32 = 0.5;
 
 
@@ -79,13 +76,10 @@ struct Projectile{
     rotation: f32,
 }
 
-type StateFunc = fn(&mut Player,StateEvents);
-
 struct Model {
     player: Player,
     asteroid: Vec<Asteroid>,
     last_event: WindowEvent,
-    state: StateFunc,
     game_state:State,
     raw_font: Vec<u8>,
     score_font: Vec<u8>,
@@ -145,7 +139,7 @@ fn model(app: &App) -> Model {
 
     stream.play().unwrap();
     
-    let mut model = Model {
+    let model = Model {
         player: Player {
                 position: pt2(0.0, 0.0),
                 rotation: 0.0,
@@ -158,7 +152,6 @@ fn model(app: &App) -> Model {
         },
         asteroid: Vec::new(),
         last_event: KeyReleased(Key::Escape),
-        state: state_idle,
         game_state: State::Menu,
         raw_font: include_bytes!("../assets/Kenney Mini.ttf").to_vec(),
         score_font: include_bytes!("../assets/Kenney Pixel.ttf").to_vec(),
@@ -189,17 +182,13 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
     
     let file_frames = audio.audio.frames::<[f32; 2]>().filter_map(Result::ok);
     let mut frames_written = 0; 
-    let mut frames_available = buffer.len_frames();
+    let frames_available = buffer.len_frames();
     for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
-        //println!("{:?}, {:?}", frame, file_frame);
         for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
-            //println!("{:?}, {:?}", sample, file_sample);
-            
             *sample = file_sample/2.0;
         }
         frames_written += 1;
     }
-//    println!("{:?} : {:?}", frames_written, frames_available );
 
     if frames_written < frames_available{
         println!("Restart audio loop");
@@ -209,7 +198,7 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
     for (i, event) in audio.event.iter_mut().enumerate(){
         let file_frames = event.frames::<[f32; 2]>().filter_map(Result::ok);
         let mut frames_written = 0; 
-        let mut frames_available = buffer.len_frames();
+        let frames_available = buffer.len_frames();
         for (frame, file_frame) in buffer.chunks_mut(2).zip(file_frames) {
             for (sample, &file_sample) in frame.iter_mut().zip(&file_frame) {
                 *sample += file_sample /2.0;
@@ -227,7 +216,7 @@ fn audio(audio:&mut Audio, buffer: &mut Buffer){
     }
 } 
 
-fn reset(app: &App, model: &mut Model){
+fn reset(_app: &App, model: &mut Model){
     model.player.position = pt2(0.0, 0.0);
     model.player.rotation = 0.0;
     model.player.rotation_inc = 0.0;
@@ -287,7 +276,7 @@ fn menu_event(app: &App, model: &mut Model, event: WindowEvent)
     }
 }
 
-fn idle_event(app: &App, model: &mut Model, event: WindowEvent)
+fn idle_event(_app: &App, model: &mut Model, event: WindowEvent)
 {
     if model.last_event != event
     {
@@ -409,10 +398,10 @@ fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
         let l_top_edge:bool = (l_tail_y) < (asteroid.position.y + (asteroid.size / 2.0));
         let l_bottom_edge:bool = (l_tail_y) > (asteroid.position.y - (asteroid.size / 2.0));
         
-        let r_left_edge:bool = (l_tail_x) > (asteroid.position.x - (asteroid.size / 2.0));
-        let r_right_edge:bool = (l_tail_x) < (asteroid.position.x + (asteroid.size / 2.0));
-        let r_top_edge:bool = (l_tail_y) < (asteroid.position.y + (asteroid.size / 2.0));
-        let r_bottom_edge:bool = (l_tail_y) > (asteroid.position.y - (asteroid.size / 2.0));
+        let r_left_edge:bool = (r_tail_x) > (asteroid.position.x - (asteroid.size / 2.0));
+        let r_right_edge:bool = (r_tail_x) < (asteroid.position.x + (asteroid.size / 2.0));
+        let r_top_edge:bool = (r_tail_y) < (asteroid.position.y + (asteroid.size / 2.0));
+        let r_bottom_edge:bool = (r_tail_y) > (asteroid.position.y - (asteroid.size / 2.0));
 
         if left_edge && right_edge && top_edge && bottom_edge
         {
@@ -435,7 +424,7 @@ fn has_ship_hit_asteroid(player: &Player, asteroids: &Vec<Asteroid>) -> bool{
     has_hit
 }
 
-fn new_point(player: &Player, asteroids: &Vec<Asteroid>) -> Point2{
+fn new_point(player: &Player, _asteroids: &Vec<Asteroid>) -> Point2{
     let mut valid_position = false;
 
     let mut new_x = 0.0;
@@ -509,7 +498,6 @@ fn update(app: &App, model: &mut Model, update: Update) {
         State::Idle => idle_update(app, model, update),
         State::GameOver => gameover_update(app, model, update),
         State::Menu => menu_update(app, model, update),
-        _ => assert!(false),
     }
 }
 
@@ -564,7 +552,7 @@ fn menu_update(app: &App, model: &mut Model, _update: Update) {
     }
 }
 
-fn idle_update(app: &App, model: &mut Model, update: Update) {
+fn idle_update(app: &App, model: &mut Model, _update: Update) {
     let win = app.window_rect();
     let current_tick:Instant = Instant::now();
 
@@ -669,20 +657,6 @@ fn idle_update(app: &App, model: &mut Model, update: Update) {
     }
 }
 
-fn state_idle(player: &mut Player, event:StateEvents)
-{
-    match event{
-        StateEvents::LeftKeyPress =>{player.rotation_inc = deg_to_rad(ANGLE_INC)},
-        StateEvents::LeftKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
-        StateEvents::RightKeyPress => {player.rotation_inc = deg_to_rad(-ANGLE_INC)},
-        StateEvents::RightKeyRelease => {player.rotation_inc = deg_to_rad(0.0)},
-        StateEvents::UpKeyPress => {player.thrust = true},
-        StateEvents::UpKeyRelease => {player.thrust = false},
-//        StateEvents::SpaceKeyPress => { fire_missile(player) },
-        _ => { /* Do nowt */}
-    }
-}
-
 fn handle_event(model: &mut Model, event:StateEvents)
 {
     match event{
@@ -702,7 +676,6 @@ fn view(app: &App, model: &Model, frame: Frame){
         State::Idle => idle_view(app, model, frame),
         State::GameOver => gameover_view(app, model, frame),
         State::Menu => menu_view(app, model, frame),
-        _ => assert!(false),
     }
 }
 
@@ -767,9 +740,6 @@ fn menu_view(app: &App, model: &Model, frame: Frame){
             .color(WHITE)
             .rotate(asteroid.rotation)
             .points(asteroid.points.clone());
-        
-        let true_rotation = asteroid.rotation + deg_to_rad(90.0 + 180.0);
-        let asteroid_size = asteroid.size / 2.0;
         
         if asteroid.position.x + (asteroid.size) >= (win.right()){
             let new_pos_x = asteroid.position.x - WINDOW_SIZE.0 as f32;
@@ -850,7 +820,7 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
     }
     let point1 = pt2(-(SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
     let point2 = pt2(0.0, -SPACESHIP_PEAK);
-    let point3 = pt2((SPACESHIP_WIDTH / 2.0), -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
+    let point3 = pt2(SPACESHIP_WIDTH / 2.0, -(SPACESHIP_PEAK + SPACESHIP_TROUGH));
     let point4 = pt2(0.0, SPACESHIP_PEAK);
 
     draw.quad()
@@ -908,9 +878,6 @@ fn idle_view(app: &App, model: &Model, frame: Frame){
             .color(WHITE)
             .rotate(asteroid.rotation)
             .points(asteroid.points.clone());
-        
-        let true_rotation = asteroid.rotation + deg_to_rad(90.0 + 180.0);
-        let asteroid_size = asteroid.size / 2.0;
         
         if asteroid.position.x + (asteroid.size) >= (win.right()){
             let new_pos_x = asteroid.position.x - WINDOW_SIZE.0 as f32;

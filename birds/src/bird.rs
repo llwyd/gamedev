@@ -16,21 +16,22 @@ impl Bird{
     const BIRD_WIDTH_2:f32 = 10.0;
 
     const BIRD_REGION_RADIUS:f32 = 180.0; 
-    const BIRD_SEPARATION_RADIUS:f32 = 65.0;
+    const BIRD_SEPARATION_RADIUS:f32 = 90.0;
 
-    const SEPARATION_GAIN:f32 = 0.024;
+    const SEPARATION_GAIN:f32 = 0.025;
     const COHESION_GAIN:f32 = 0.005;
     const ALIGNMENT_GAIN:f32 = 0.12;
 
-    const SEP_SPEED_MIN:f32 = 1.0;
-    const SEP_SPEED_MAX:f32 = 1.5;
+    const SEP_SPEED_MIN:f32 = 0.5;
+    const SEP_SPEED_MAX:f32 = 1.0;
     
     const COH_SPEED_MIN:f32 = 0.1;
     const COH_SPEED_MAX:f32 = 1.0;
 
     const BIRD_SPEED_MIN:f32 = 1.0;
     const BIRD_SPEED_MAX:f32 = 5.0;
-    
+   
+    const SEP_FIXED_ANGLE:f32 = 30.0;
 
     const ALIGNMENT_INITIAL:f32 = 0.0;
     const REDUCTION_FACTOR:f32 = 0.5;
@@ -131,7 +132,8 @@ impl Bird{
 
         /* Separation */
         if self.sep_changed{
-            let diff = self.spatial_awareness(self.sep_angle, sep_gain, Self::SEP_SPEED_MIN , Self::SEP_SPEED_MAX);
+            let sep_angle = self.raw_to_fixed_angle(self.sep_angle, Self::SEP_FIXED_ANGLE);
+            let diff = self.spatial_awareness(sep_angle, sep_gain, Self::SEP_SPEED_MIN , Self::SEP_SPEED_MAX);
             self.angle += diff;
             self.sep_changed = false;
         }
@@ -167,6 +169,14 @@ impl Bird{
         self.xy.y += mov_inc * self.angle.cos();
 
         self.screen_wrap(win);
+    }
+
+    fn raw_to_fixed_angle(&self, raw_angle:f32, fixed_angle:f32)->f32{
+        let mut angle = fixed_angle;
+        if raw_angle.is_positive(){
+            angle *= -1.0;
+        }
+        angle
     }
 
     fn wrap_angle(&self, angle: f32) -> f32{

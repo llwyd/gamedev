@@ -86,8 +86,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
                 {
                     nearby_sep.push(model.bird[j]);
                 }
-                
-                if calcs::is_bird_nearby(&model.bird[i], &model.bird[j], radius)
+                else if calcs::is_bird_nearby(&model.bird[i], &model.bird[j], radius)
                 {
                     nearby.push(model.bird[j]);
                 }

@@ -76,7 +76,9 @@ fn update(app: &App, model: &mut Model, _update: Update) {
         /* Collect nearby birds */
         let mut nearby:Vec<Bird> = Vec::new();
         let mut nearby_sep:Vec<Bird> = Vec::new();
-
+        
+        let mut nearest_bird:usize = 0 as usize;
+        let mut nearest_dist:f32 = std::f32::MAX;
         for j in 0..num_bird{
             if i != j
             {
@@ -84,7 +86,12 @@ fn update(app: &App, model: &mut Model, _update: Update) {
                 let radius = model.bird[i].radius();
                 if calcs::is_bird_nearby(&model.bird[i], &model.bird[j], sep_radius)
                 {
-                    nearby_sep.push(model.bird[j]);
+                    //nearby_sep.push(model.bird[j]);
+                    let distance = calcs::distance(&model.bird[i], &model.bird[j]);
+                    if distance < nearest_dist{
+                        nearest_bird = j;
+                        nearest_dist = distance;
+                    }
                 }
                 else if calcs::is_bird_nearby(&model.bird[i], &model.bird[j], radius)
                 {
@@ -93,8 +100,9 @@ fn update(app: &App, model: &mut Model, _update: Update) {
             }
         }
         /* Handle Separation */
+        nearby_sep.push(model.bird[nearest_bird]);
         if nearby_sep.len() > 0{
-            let sep_angle = calcs::separation(&mut model.bird[i], &nearby_sep);
+            let sep_angle = calcs::cohesion(&mut model.bird[i], &nearby_sep);
             model.bird[i].set_separation(-sep_angle); 
         }
         
@@ -105,7 +113,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
             model.bird[i].set_alignment(align_angle); 
 
             /* Handle Cohesion */
-            let coh_angle = calcs::separation(&mut model.bird[i], &nearby);
+            let coh_angle = calcs::cohesion(&mut model.bird[i], &nearby);
             model.bird[i].set_cohesion(coh_angle); 
         }
         else

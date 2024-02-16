@@ -8,7 +8,15 @@ pub fn is_bird_nearby(bird: &Bird, other_bird: &Bird, bird_radius: f32) -> bool{
     other_bird_radius <= bird_radius
 }
 
-pub fn separation(bird: &mut Bird, other_birds: &Vec <Bird>)->f32{
+pub fn distance(bird: &Bird, other_bird: &Bird) -> f32{
+    let delta_x = bird.position().x - other_bird.position().x;
+    let delta_y = bird.position().y - other_bird.position().y;
+
+    let distance = (delta_x.powf(2.0) + delta_y.powf(2.0)).sqrt();
+    distance
+}
+
+pub fn cohesion(bird: &mut Bird, other_birds: &Vec <Bird>)->f32{
 
     /* Calculate angles */
     let num_bird = other_birds.len();

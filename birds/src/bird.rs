@@ -16,9 +16,9 @@ impl Bird{
     const BIRD_WIDTH_2:f32 = 10.0;
 
     const BIRD_REGION_RADIUS:f32 = 180.0; 
-    const BIRD_SEPARATION_RADIUS:f32 = 90.0;
+    const BIRD_SEPARATION_RADIUS:f32 = 65.0;
 
-    const SEPARATION_GAIN:f32 = 0.025;
+    const SEPARATION_GAIN:f32 = 0.028;
     const COHESION_GAIN:f32 = 0.005;
     const ALIGNMENT_GAIN:f32 = 0.12;
 
@@ -31,10 +31,10 @@ impl Bird{
     const BIRD_SPEED_MIN:f32 = 1.0;
     const BIRD_SPEED_MAX:f32 = 5.0;
    
-    const SEP_FIXED_ANGLE:f32 = 30.0;
+    const SEP_FIXED_ANGLE:f32 = 7.5;
 
     const ALIGNMENT_INITIAL:f32 = 0.0;
-    const REDUCTION_FACTOR:f32 = 0.5;
+    const REDUCTION_FACTOR:f32 = 0.75;
 
     const TURN_ANGLE:f32 = 45.0;
     const TURN_GAIN:f32 = 0.02;
@@ -174,6 +174,7 @@ impl Bird{
     fn raw_to_fixed_angle(&self, raw_angle:f32, fixed_angle:f32)->f32{
         let mut angle = fixed_angle;
         if raw_angle.is_positive(){
+        //if raw_angle.is_negative(){
             angle *= -1.0;
         }
         angle

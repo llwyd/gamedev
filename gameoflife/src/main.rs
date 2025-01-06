@@ -15,7 +15,20 @@ fn setup(mut commands: Commands,
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
+    app.add_plugins(DefaultPlugins.set(WindowPlugin{
+        primary_window: { 
+            Some(
+                Window{
+                    title: "Conway's game of life".into(),
+                    resolution: (800., 600.).into(),
+                    resize_constraints: WindowResizeConstraints{min_width: 800., min_height: 600., max_width: 800., max_height: 600.},
+                    resizable: false,
+                    ..default()
+                }
+            )},
+            ..default()
+        })
+        )
         .add_systems(Startup, setup)
         .run();
 }

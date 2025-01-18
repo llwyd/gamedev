@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 const WINDOW_SIZE: (f32, f32) = (640., 480.);
-const SQUARE_SIZE: f32 = 10.;
+const SQUARE_SIZE: f32 = 8.;
 const NUM_COLS: u32 = (WINDOW_SIZE.0 / SQUARE_SIZE) as u32;
 const NUM_ROWS: u32 = (WINDOW_SIZE.1 / SQUARE_SIZE) as u32;
 const NUM_SQUARES: u32 = NUM_COLS * NUM_ROWS;
@@ -43,14 +43,19 @@ fn setup(mut commands: Commands,
 
     for i in 0..NUM_SQUARES as usize{
         let alive: bool = rng.gen();
-        println!("{:}", alive);
         game.cell.push(
             Cell{
                 alive: alive,
                 rect:Rectangle::new(SQUARE_SIZE, SQUARE_SIZE)
             });
         let colour = if game.cell[i].alive { ALIVE_COLOUR } else { DEAD_COLOUR };
-        commands.spawn((Mesh2d(meshes.add(game.cell[i].rect)),MeshMaterial2d(materials.add(colour)),Transform::from_xyz(-320.0 + (SQUARE_SIZE / 2.0),0.0,0.0)));
+        let x = (i as u32 % NUM_COLS) as f32;
+        let y = (i as u32 / NUM_COLS) as f32;
+        let x_draw = -320.0 + (x * SQUARE_SIZE) + ( SQUARE_SIZE / 2.0 );
+        let y_draw = (-240.0 + (y * SQUARE_SIZE) + ( SQUARE_SIZE / 2.0 )) * -1.0;
+        //commands.spawn((Mesh2d(meshes.add(game.cell[i].rect)),MeshMaterial2d(materials.add(colour)),Transform::from_xyz(-320.0 + (SQUARE_SIZE / 2.0),0.0,0.0)));
+        commands.spawn((Mesh2d(meshes.add(game.cell[i].rect)),MeshMaterial2d(materials.add(colour)),Transform::from_xyz(x_draw,y_draw,0.0)));
+        println!("[{:}]: {:}, ({:}, {:})({:}, {:})", i, alive, x, y, x_draw, y_draw);
     }
     assert!(game.cell.len() as u32 == NUM_SQUARES);
     
@@ -59,8 +64,8 @@ fn setup(mut commands: Commands,
     println!("Squares: {:}", NUM_SQUARES);
 }
 
-fn update_loop(mut game: ResMut<Grid>){
-    println!("Num Cells: {:}", game.cell.len());
+fn update_loop(mut _game: ResMut<Grid>){
+    //println!("Num Cells: {:}", game.cell.len());
 }
 
 fn main() {

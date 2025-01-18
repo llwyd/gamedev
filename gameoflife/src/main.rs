@@ -22,6 +22,7 @@ struct Cell
 {
     alive: bool,
     rect: Rectangle,
+    colour: Color,
 }
 
 #[derive(Resource)]
@@ -43,18 +44,19 @@ fn setup(mut commands: Commands,
 
     for i in 0..NUM_SQUARES as usize{
         let alive: bool = rng.gen();
+        let colour = if alive { ALIVE_COLOUR } else { DEAD_COLOUR };
         game.cell.push(
             Cell{
                 alive: alive,
-                rect:Rectangle::new(SQUARE_SIZE, SQUARE_SIZE)
+                rect:Rectangle::new(SQUARE_SIZE, SQUARE_SIZE),
+                colour: colour,
             });
-        let colour = if game.cell[i].alive { ALIVE_COLOUR } else { DEAD_COLOUR };
         let x = (i as u32 % NUM_COLS) as f32;
         let y = (i as u32 / NUM_COLS) as f32;
         let x_draw = -320.0 + (x * SQUARE_SIZE) + ( SQUARE_SIZE / 2.0 );
         let y_draw = (-240.0 + (y * SQUARE_SIZE) + ( SQUARE_SIZE / 2.0 )) * -1.0;
         //commands.spawn((Mesh2d(meshes.add(game.cell[i].rect)),MeshMaterial2d(materials.add(colour)),Transform::from_xyz(-320.0 + (SQUARE_SIZE / 2.0),0.0,0.0)));
-        commands.spawn((Mesh2d(meshes.add(game.cell[i].rect)),MeshMaterial2d(materials.add(colour)),Transform::from_xyz(x_draw,y_draw,0.0)));
+        commands.spawn((Mesh2d(meshes.add(game.cell[i].rect)),MeshMaterial2d(materials.add(game.cell[i].colour)),Transform::from_xyz(x_draw,y_draw,0.0)));
         println!("[{:}]: {:}, ({:}, {:})({:}, {:})", i, alive, x, y, x_draw, y_draw);
     }
     assert!(game.cell.len() as u32 == NUM_SQUARES);
@@ -64,8 +66,14 @@ fn setup(mut commands: Commands,
     println!("Squares: {:}", NUM_SQUARES);
 }
 
-fn update_loop(mut _game: ResMut<Grid>){
-    //println!("Num Cells: {:}", game.cell.len());
+fn update_loop(mut game: ResMut<Grid>){
+
+    let mut rng = rand::thread_rng();
+    for i in 0..game.cell.len(){
+        let alive: bool = rng.gen();
+        game.cell[i].alive = alive;
+        game.cell[i].colour = if alive { ALIVE_COLOUR } else { DEAD_COLOUR };
+    }
 }
 
 fn main() {
